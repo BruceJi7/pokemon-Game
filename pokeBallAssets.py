@@ -42,7 +42,7 @@ class Menubutton():
     def makeRect(self):
         return self.surface.get_rect()
 
-alakaPath = r'C:\Users\Administrator\Google 드라이브\ASPython\Pokemon Game\assets\alakazam'
+alakaPath = r'C:\Users\Administrator\Google 드라이브\ASPython\Pokemon Game\pokemonGame\assets\alakazam'
 alakazamImg = {
     'normal': pygame.image.load(os.path.join(alakaPath, 'alakazamNormal.png')),
     'blink': pygame.image.load(os.path.join(alakaPath, 'alakazamBlink.png')),
@@ -51,7 +51,7 @@ alakazamImg = {
 }
 
 
-pokeBallPath = r'C:\Users\Administrator\Google 드라이브\ASPython\Pokemon Game\assets\pokeball'
+pokeBallPath = r'C:\Users\Administrator\Google 드라이브\ASPython\Pokemon Game\pokemonGame\assets\pokeball'
 
 pokeballImgs = {
     'open' : pygame.image.load(os.path.join(pokeBallPath, 'pokeballOpen.png')),
@@ -69,7 +69,7 @@ class pokeball():
         self.path = pathDict
         self.__state = state
         self.__message = message
-        self.__surface = surface
+        # self.__surface = surface
         self.rect = self.makeRect()
 
 
@@ -100,10 +100,11 @@ class pokeball():
         else:
             text = pokeBallFont.render(self.message, 1, WHITE)
             messageRect = text.get_rect()
-            messageRect.center = (80, 130)
-            self.path['open'].blit(text, messageRect)
-            return self.path['open']
-            return self.path['open']
+            messageRect.center = (80, 140)
+            selfSurf = self.path['open'].copy()
+            selfSurf.blit(text, messageRect)
+            return selfSurf
+
 
     def makeRect(self):
         return self.surface.get_rect()

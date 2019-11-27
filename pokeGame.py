@@ -1,4 +1,4 @@
-import pygame, sys
+import pygame, sys, random
 from pygame.locals import *
 import pokeBallAssets as assets
 
@@ -7,6 +7,9 @@ import pokeBallAssets as assets
 FPS = 30
 WINDOWWIDTH = 1024
 WINDOWHEIGHT = 768
+
+gridHeight = 192
+gridWidth =  170
 
 BLACK = (0, 0, 0)
 
@@ -19,6 +22,8 @@ def main():
     pygame.display.set_caption('The PokeBall Game')
 
 
+
+
     while True:
 
         checkForQuit()
@@ -28,27 +33,12 @@ def main():
 
         alakazamRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
 
-        messages = ("He's", "She's", "It's", "Tom is", "They're", "I'm")
+        messages = ["He's", "She's", "It's", "Tom is", "They're", "I'm"]
+        
+        pokeBalls = generatePokeballs(messages)
 
-        cellHeight = 192
-        cellWidth =  170
-
-
-        locations = ((cellWidth,cellHeight*2),(cellWidth*2,cellHeight), (cellWidth*4, cellHeight), (cellWidth*5, cellHeight*2), (cellWidth*4, cellHeight*3), (cellWidth*2, cellHeight*3))
-
-        pokeBalls = [assets.pokeball(assets.pokeballImgs) for _ in range(6)]
-
-        pokeObjs = []
-        for n in range(0, 6):
-            current = pokeBalls[n]
-            current.message = messages[n]
-            pokeballImg = current.surface
-            pokeRect = current.rect
-            pokeRect.center = locations[n]
-            pokeObjs.append((pokeballImg, pokeRect))
-
-        for pair in pokeObjs:
-            DISPLAYSURF.blit(pair[0], pair[1])
+        for ball in pokeBalls:
+            DISPLAYSURF.blit(ball.surface, ball.rect)
 
 
         # DISPLAYSURF.blit(pokeBallImg, pokeBallRect)
@@ -73,6 +63,29 @@ def checkForQuit():
         if event.key == K_ESCAPE:
             terminate()
         pygame.event.post(event)
+
+def generatePokeballs(messages):
+    random.shuffle(messages)
+
+    locations =((gridWidth*2,gridHeight*2),
+                (gridWidth*2.5,gridHeight), 
+                (gridWidth*3.5, gridHeight), 
+                (gridWidth*4, gridHeight*2), 
+                (gridWidth*3.5, gridHeight*3), 
+                (gridWidth*2.5, gridHeight*3))
+
+ 
+    pokeObjs = []
+    for n in range(len(locations)):
+        current = assets.pokeball(assets.pokeballImgs)
+        current.message = messages[n]
+        current.state = 'open'
+        pokeRect = current.rect
+        pokeRect.center = locations[n]
+        pokeObjs.append(current)
+
+    return pokeObjs
+
 
 
      
