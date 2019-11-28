@@ -76,7 +76,6 @@ class pokeball():
         self.__message = message
         self.__surface = None
         self.rect = self.makeRect()
-       
 
 
     # State Setter/Getter
@@ -132,8 +131,6 @@ class pokeball():
         return self.surface.get_rect()
 
 
-
-
 class alakazamChar():
     def __init__(self, path, state='normal', surface=None):
         self.path = path
@@ -159,6 +156,11 @@ class alakazamChar():
         return self.surface.get_rect()
 
 alakazam = alakazamChar(alakazamImg)
+
+class question():
+    def __init__(self, question, answer):
+        self.question = question
+        self.answer = answer
 
 
 def degToRadian(deg):

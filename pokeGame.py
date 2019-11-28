@@ -1,4 +1,4 @@
-import pygame, sys, random
+import pygame, sys, random, openpyxl, os
 from pygame.locals import *
 import pokeBallAssets as assets
 
@@ -42,7 +42,16 @@ def main():
     DISPLAYSURF.fill(BLACK)
     pygame.display.set_caption('The PokeBall Game')
 
-    messages = ["He's", "She's", "The cat is", "Tom is", "They're", "I'm"]
+    book = 'EB2'
+    unit = 'U3'
+
+    questions = excelGetQuestionMessage(book, unit)
+
+    
+    correctQAPair = random.choice(questions)
+
+    messages = [question.answer for question in questions]
+
     
     pokeBalls = generatePokeballs(messages)
 
@@ -147,6 +156,21 @@ def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, rotateTimes=
             pygame.display.update()
         FPSCLOCK.tick(FPS)
             
+
+def excelGetQuestionMessage(book, unit):
+    path = r'C:\Users\Administrator\Google 드라이브\ASPython\Pokemon Game\pokemonGame\quiz'
+    bookPath = f'{book}.xlsx'
+    excelPath = os.path.join(path, bookPath)
+    questions = []
+
+    wb = openpyxl.load_workbook(excelPath)
+    sheet = wb[unit]
+    for row in range(1, 7):
+        questionCell = sheet.cell(row=row, column=1).value
+        answerCell = sheet.cell(row=row, column=2).value
+        questions.append(assets.question(questionCell, answerCell))
+
+    return questions
 
 
             
