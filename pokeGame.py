@@ -13,7 +13,28 @@ gridWidth =  170
 
 BLACK = (0, 0, 0)
 
+animationSpeed = 15
+centerOffset = 200
+
+locationAngles = [0, 60, 120, 180, 240, 300]
+
+
+locations = [
+    assets.getTrigoFromCenter(0, centerOffset, WINDOWWIDTH, WINDOWHEIGHT),
+    assets.getTrigoFromCenter(60, centerOffset, WINDOWWIDTH, WINDOWHEIGHT),
+    assets.getTrigoFromCenter(120, centerOffset, WINDOWWIDTH, WINDOWHEIGHT),
+    assets.getTrigoFromCenter(180, centerOffset, WINDOWWIDTH, WINDOWHEIGHT),
+    assets.getTrigoFromCenter(240, centerOffset, WINDOWWIDTH, WINDOWHEIGHT),
+    assets.getTrigoFromCenter(300, centerOffset, WINDOWWIDTH, WINDOWHEIGHT)
+    ]
+
+
+
+
+
+
 def main():
+    global FPSCLOCK
     pygame.init()
 
     FPSCLOCK = pygame.time.Clock()
@@ -21,32 +42,62 @@ def main():
     DISPLAYSURF.fill(BLACK)
     pygame.display.set_caption('The PokeBall Game')
 
+    messages = ["He's", "She's", "The cat is", "Tom is", "They're", "I'm"]
+    
+    pokeBalls = generatePokeballs(messages)
 
 
+    spinAnimation(pokeBalls, locationAngles, animationSpeed, DISPLAYSURF)
+    DISPLAYSURF.fill(BLACK)
 
     while True:
+        mouseClick = False
 
         checkForQuit()
+
+        
 
         alakazamImg = assets.alakazam.surface
         alakazamRect = assets.alakazam.rect
 
         alakazamRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
 
-        messages = ["He's", "She's", "It's", "Tom is", "They're", "I'm"]
         
-        pokeBalls = generatePokeballs(messages)
+        
+        
+
+        # for ball in pokeBalls:
+        #     DISPLAYSURF.blit(ball.surface, ball.rect)
+
+        DISPLAYSURF.blit(alakazamImg, alakazamRect)
+
+
+
+        mouseX, mouseY = pygame.mouse.get_pos()
+
+         
+        for event in pygame.event.get():
+            if event.type == MOUSEBUTTONUP:
+                mouseClick = True
+            
 
         for ball in pokeBalls:
-            DISPLAYSURF.blit(ball.surface, ball.rect)
+            if ball.rect.collidepoint(mouseX, mouseY):
+                if mouseClick:
+                    if ball.state == 'closed':
+                        ball.state = 'open'
+                    elif ball.state == 'open':
+                        ball.state = 'closed'
 
 
         # DISPLAYSURF.blit(pokeBallImg, pokeBallRect)
 
-        DISPLAYSURF.blit(alakazamImg, alakazamRect)
+        # spinAnimation(pokeBalls, locationAngles, animationSpeed, DISPLAYSURF)
+
+        drawPokeBallDefaultLocations(pokeBalls, locationAngles, DISPLAYSURF)
         
 
-        pygame.display.update()
+        pygame.display.flip()
 
         FPSCLOCK.tick(FPS)
 
@@ -67,28 +118,40 @@ def checkForQuit():
 def generatePokeballs(messages):
     random.shuffle(messages)
 
-    locations =((gridWidth*2,gridHeight*2),
-                (gridWidth*2.5,gridHeight), 
-                (gridWidth*3.5, gridHeight), 
-                (gridWidth*4, gridHeight*2), 
-                (gridWidth*3.5, gridHeight*3), 
-                (gridWidth*2.5, gridHeight*3))
-
- 
     pokeObjs = []
-    for n in range(len(locations)):
+    for n in range(len(messages)):
         current = assets.pokeball(assets.pokeballImgs)
         current.message = messages[n]
-        current.state = 'open'
-        pokeRect = current.rect
-        pokeRect.center = locations[n]
+        current.state = 'closed'
         pokeObjs.append(current)
 
     return pokeObjs
 
 
+def drawPokeBallDefaultLocations(pokeballs, locations, targetSurf):
+    for n in range(len(pokeballs)):
+        current = pokeballs[n]
+        current.rect.center = assets.getTrigoFromCenter(locations[n], centerOffset, WINDOWWIDTH, WINDOWHEIGHT)
+        targetSurf.blit(current.surface, current.rect)
 
-     
+def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, rotateTimes=3 ):
+    totalRotation = 360 * rotateTimes
+    origSurf = targetSurf.copy()
+
+    for rotationStep in range(0, totalRotation, animationSpeed):
+        targetSurf.blit(origSurf, (0, 0))
+        for n in range(len(pokeballs)):
+            location = assets.getTrigoFromCenter((locations[n]+rotationStep), centerOffset, WINDOWWIDTH, WINDOWHEIGHT)
+            pokeballs[n].rect.center = location
+            targetSurf.blit(pokeballs[n].surface, pokeballs[n].rect)
+            pygame.display.update()
+        FPSCLOCK.tick(FPS)
+            
+
+
+            
+
+
 
 
 main()

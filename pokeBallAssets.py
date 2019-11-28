@@ -1,4 +1,4 @@
-import pygame, os
+import pygame, os, math
 
 
 
@@ -7,6 +7,10 @@ WHITE           =(255, 255, 255)
 BLACK           =(  0,   0,   0)
 GREEN           =(  0, 200,   0)
 RED             =(255,   0,   0)
+CLEAR           =(  0,   0,   0,   0)
+
+
+backGroundColour = BLACK
 
 pygame.init()
 
@@ -58,19 +62,21 @@ pokeballImgs = {
     'closed' : pygame.image.load(os.path.join(pokeBallPath, 'pokeballClosed.png')),
 }
 
+# quickBall = pokeBallImgs['closed']
 
 def pokeFont(size=20):
     return pygame.font.SysFont('minecraft', size)
 
-pokeBallFont = pokeFont(40)
+pokeBallFont = pokeFont(25)
 
 class pokeball():
-    def __init__(self, pathDict, message=None, state=None, surface=None):
+    def __init__(self, pathDict, message=None, state=None):
         self.path = pathDict
         self.__state = state
         self.__message = message
-        # self.__surface = surface
+        self.__surface = None
         self.rect = self.makeRect()
+       
 
 
     # State Setter/Getter
@@ -95,15 +101,31 @@ class pokeball():
 
     @property
     def surface(self):
+        self.__surface = pygame.Surface((180, 200))
+        self.__surface.convert_alpha
+        self.__surface.fill(CLEAR)
+
         if self.state == 'closed':
-            return self.path['closed']
+            closedBall = self.path['closed']
+            closedBallRect = closedBall.get_rect()
+            closedBallRect.center = (90, 100)
+            self.__surface.blit(closedBall, closedBallRect)
+
+            return self.__surface
+
         else:
             text = pokeBallFont.render(self.message, 1, WHITE)
             messageRect = text.get_rect()
-            messageRect.center = (80, 140)
-            selfSurf = self.path['open'].copy()
-            selfSurf.blit(text, messageRect)
-            return selfSurf
+            messageRect.center = (90, 100)
+
+            openBall = self.path['open'].copy()
+            openBallRect = openBall.get_rect()
+            openBallRect.center = (90, 100)
+
+            self.__surface.blit(openBall, openBallRect)
+            self.__surface.blit(text, messageRect)
+            
+            return self.__surface
 
 
     def makeRect(self):
@@ -137,3 +159,41 @@ class alakazamChar():
         return self.surface.get_rect()
 
 alakazam = alakazamChar(alakazamImg)
+
+
+def degToRadian(deg):
+    return deg * math.pi / 180
+
+def getXcoord(deg, hypo):
+    # The sin of the degree is equal to ANS divided by HYPO
+    # Get sin of degree.
+    # Multiply this number by the HYPO
+    # This will be the length co-ord
+    radA = degToRadian(deg)
+    sinA = math.sin(radA)
+    xLength = sinA * hypo
+
+    return xLength
+
+def getYcoord(deg, hypo):
+    # The same but wit COSINE I think.
+    radA = degToRadian(deg)
+    cosA = math.cos(radA)
+    yLength = cosA * hypo
+    return yLength
+
+def getTrigoXY(deg, hypo):
+    x = getXcoord(deg, hypo)
+    y = getYcoord(deg, hypo)
+    intx = int(x)
+    inty = int(y)
+    return (intx, inty)
+
+def getTrigoFromCenter(deg, hypo, WINDOWWIDTH, WINDOWHEIGHT):
+    trigX, trigY = getTrigoXY(deg, hypo)
+
+    return (trigX + WINDOWWIDTH/2, trigY+WINDOWHEIGHT/2)
+
+
+
+
