@@ -11,7 +11,8 @@ WINDOWHEIGHT = 768
 gridHeight = 192
 gridWidth =  170
 
-BLACK = (0, 0, 0)
+BLACK           =(  0,   0, 0)
+WHITE           =(255, 255, 255)
 
 animationSpeed = 15
 centerOffset = 200
@@ -47,9 +48,12 @@ def main():
 
     questions = excelGetQuestionMessage(book, unit)
 
+
     
     correctQAPair = random.choice(questions)
 
+    questionSurf, questionRect = drawQuestionPanel(correctQAPair)
+    
     messages = [question.answer for question in questions]
 
     
@@ -58,6 +62,8 @@ def main():
 
     spinAnimation(pokeBalls, locationAngles, animationSpeed, DISPLAYSURF)
     DISPLAYSURF.fill(BLACK)
+
+    
 
     while True:
         mouseClick = False
@@ -79,6 +85,7 @@ def main():
         #     DISPLAYSURF.blit(ball.surface, ball.rect)
 
         DISPLAYSURF.blit(alakazamImg, alakazamRect)
+        DISPLAYSURF.blit(questionSurf, questionRect)
 
 
 
@@ -173,7 +180,18 @@ def excelGetQuestionMessage(book, unit):
     return questions
 
 
-            
+def drawQuestionPanel(questionObj):
+
+    questionFont = assets.pokeFont(40)
+    text = questionFont.render(questionObj.question, 1, WHITE)
+    textRect = text.get_rect()
+    textRect.center = (WINDOWWIDTH/2, 50)
+
+    return (text, textRect)
+
+
+
+
 
 
 
