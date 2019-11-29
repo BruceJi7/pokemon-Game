@@ -7,7 +7,7 @@ WHITE           =(255, 255, 255)
 BLACK           =(  0,   0,   0)
 GREEN           =(  0, 200,   0)
 RED             =(255,   0,   0)
-CLEAR           =(  0,   0,   0,   0)
+CLEAR           =(  0,   0,   0,  0)
 
 
 backGroundColour = BLACK
@@ -46,7 +46,7 @@ class Menubutton():
     def makeRect(self):
         return self.surface.get_rect()
 
-alakaPath = r'C:\Users\Administrator\Google 드라이브\ASPython\Pokemon Game\pokemonGame\assets\alakazam'
+alakaPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\alakazam'
 alakazamImg = {
     'normal': pygame.image.load(os.path.join(alakaPath, 'alakazamNormal.png')),
     'blink': pygame.image.load(os.path.join(alakaPath, 'alakazamBlink.png')),
@@ -55,19 +55,17 @@ alakazamImg = {
 }
 
 
-pokeBallPath = r'C:\Users\Administrator\Google 드라이브\ASPython\Pokemon Game\pokemonGame\assets\pokeball'
+pokeBallPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\pokeball'
 
 pokeballImgs = {
     'open' : pygame.image.load(os.path.join(pokeBallPath, 'pokeballOpen.png')),
     'closed' : pygame.image.load(os.path.join(pokeBallPath, 'pokeballClosed.png')),
 }
 
-# quickBall = pokeBallImgs['closed']
-
 def pokeFont(size=20):
     return pygame.font.SysFont('minecraft', size)
 
-pokeBallFont = pokeFont(25)
+pokeBallFont = pokeFont(20)
 
 class pokeball():
     def __init__(self, pathDict, message=None, state=None):
@@ -100,14 +98,15 @@ class pokeball():
 
     @property
     def surface(self):
-        self.__surface = pygame.Surface((180, 200))
-        self.__surface.convert_alpha
+        self.__surface = pygame.Surface((140, 90))
+        # self.__surface.convert_alpha
         self.__surface.fill(CLEAR)
 
         if self.state == 'closed':
             closedBall = self.path['closed']
+
             closedBallRect = closedBall.get_rect()
-            closedBallRect.center = (90, 100)
+            closedBallRect.center = (70, 45)
             self.__surface.blit(closedBall, closedBallRect)
 
             return self.__surface
@@ -115,11 +114,11 @@ class pokeball():
         else:
             text = pokeBallFont.render(self.message, 1, WHITE)
             messageRect = text.get_rect()
-            messageRect.center = (90, 100)
+            messageRect.center = (70, 50)
 
             openBall = self.path['open'].copy()
             openBallRect = openBall.get_rect()
-            openBallRect.center = (90, 100)
+            openBallRect.center = (70, 45)
 
             self.__surface.blit(openBall, openBallRect)
             self.__surface.blit(text, messageRect)
@@ -150,7 +149,13 @@ class alakazamChar():
     
     @property
     def surface(self):
-        return self.path[self.state]
+        self.__surface = pygame.Surface((160, 160))
+        self.__surface.fill(BLACK)
+        image = self.path[self.state]
+        imgRect = image.get_rect()
+        imgRect.center = (80, 80)
+        self.__surface.blit(image, imgRect )
+        return self.__surface
     
     def makeRect(self):
         return self.surface.get_rect()
@@ -161,6 +166,11 @@ class question():
     def __init__(self, question, answer):
         self.question = question
         self.answer = answer
+
+soundPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\sounds'
+
+ballSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballSwirl.ogg'))
+ballOpenSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballOpen.ogg'))
 
 
 def degToRadian(deg):
