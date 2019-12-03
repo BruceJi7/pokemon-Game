@@ -1,6 +1,9 @@
 import pygame, os, math
 
 
+WINDOWWIDTH = 1024
+WINDOWHEIGHT = 786
+
 
 # Colours
 WHITE           =(255, 255, 255)
@@ -10,7 +13,8 @@ RED             =(255,   0,   0)
 CLEAR           =(  0,   0,   0,  0)
 
 
-backGroundColour = BLACK
+BKGCOLOR = WHITE
+MAINTEXTCOLOR = BLACK
 
 pygame.init()
 
@@ -98,7 +102,9 @@ class pokeball():
 
     @property
     def surface(self):
-        self.__surface = pygame.Surface((140, 90))
+        surfaceWidth = 180
+        surfaceHeight = 90
+        self.__surface = pygame.Surface((surfaceWidth, surfaceHeight), pygame.SRCALPHA)
         # self.__surface.convert_alpha
         self.__surface.fill(CLEAR)
 
@@ -106,19 +112,19 @@ class pokeball():
             closedBall = self.path['closed']
 
             closedBallRect = closedBall.get_rect()
-            closedBallRect.center = (70, 45)
+            closedBallRect.center = (surfaceWidth/2, surfaceHeight/2)
             self.__surface.blit(closedBall, closedBallRect)
 
             return self.__surface
 
         else:
-            text = pokeBallFont.render(self.message, 1, WHITE)
+            text = pokeBallFont.render(self.message, 1, MAINTEXTCOLOR)
             messageRect = text.get_rect()
-            messageRect.center = (70, 50)
+            messageRect.center = (surfaceWidth/2, 50)
 
             openBall = self.path['open'].copy()
             openBallRect = openBall.get_rect()
-            openBallRect.center = (70, 45)
+            openBallRect.center = (surfaceWidth/2, surfaceHeight/2)
 
             self.__surface.blit(openBall, openBallRect)
             self.__surface.blit(text, messageRect)
@@ -150,7 +156,7 @@ class alakazamChar():
     @property
     def surface(self):
         self.__surface = pygame.Surface((160, 160))
-        self.__surface.fill(BLACK)
+        self.__surface.fill(BKGCOLOR)
         image = self.path[self.state]
         imgRect = image.get_rect()
         imgRect.center = (80, 80)
@@ -167,12 +173,109 @@ class question():
         self.question = question
         self.answer = answer
 
+
+
+teamImagesPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\team'
+teamImgs = {
+    'bar': {
+        'A': pygame.image.load(os.path.join(teamImagesPath, 'teamBarA.png')),
+        'B': pygame.image.load(os.path.join(teamImagesPath, 'teamBarB.png')),
+    },
+    'pokeScore': pygame.image.load(os.path.join(teamImagesPath, 'scorePokeBall.png')),
+    'greatScore': pygame.image.load(os.path.join(teamImagesPath, 'scoreGreatBall.png')),
+}
+
+
+POINTBALLPOSX = 36
+POINTBALLPOSY = 0
+
+class Team():
+    def __init__(self, name):
+        self.name = name
+        self.scoreList = [] # contains pygame images for each 
+        self.images = teamImgs
+
+        self.barImg = self.images['bar'][self.name]
+
+        self.teamSurf = pygame.Surface((154, 26), pygame.SRCALPHA)
+        self.teamRect = self.teamSurf.get_rect()
+        self.teamRectY = WINDOWHEIGHT - 100
+        self.teamRectX = 20
+        
+
+        self.pointSurf = pygame.Surface((108,18), pygame.SRCALPHA)
+        self.pointRect = self.pointSurf.get_rect()
+        self.pointSpacing = 0
+
+
+
+    # State Setter/Getter
+    @property
+    def score(self):
+        return len(self.scoreList)
+    
+
+    def addPoint(self):
+        self.scoreList.append(self.images['pokeScore'])
+
+    def addGreatPoint(self):
+        self.scoreList.append(self.images['greatScore'])
+
+    def drawTeamLabel(self, targetSurf):
+        ballX = 0
+        ballY = 0
+        self.teamSurf.blit(self.barImg, (0, 0))
+        for ball in self.scoreList:
+            self.pointSurf.blit(ball, (ballX, ballY))
+            ballX += 18
+        self.pointRect.topleft = (self.pointSpacing, 0)
+        self.teamSurf.blit(self.pointSurf, self.pointRect)
+        self.teamRect.topleft = (self.teamRectX, self.teamRectY)
+        targetSurf.blit(self.teamSurf, self.teamRect)
+             
+    
+
+    
+class TeamA(Team):
+    def __init__(self):
+        super().__init__(name='A')
+
+        self.barImg = self.images['bar']['A']
+        self.teamRectX = 0
+        self.pointSpacing = 20
+        
+
+
+class TeamB(Team):
+    def __init__(self):
+        super().__init__(name='B')
+
+        self.barImg = self.images['bar']['B']
+        self.teamRectX = (WINDOWWIDTH - 154 - 20)
+        self.pointSpacing = 8
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 soundPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\sounds'
 
 ballSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballSwirl.ogg'))
 ballOpenSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballOpen.ogg'))
 
 
+
+# Trig Functions
 def degToRadian(deg):
     return deg * math.pi / 180
 
