@@ -181,6 +181,11 @@ teamImgs = {
         'A': pygame.image.load(os.path.join(teamImagesPath, 'teamBarA.png')),
         'B': pygame.image.load(os.path.join(teamImagesPath, 'teamBarB.png')),
     },
+    'turnIndicator':
+    {
+        'A': pygame.image.load(os.path.join(teamImagesPath, 'turnIndicatorA.png')),
+        'B': pygame.image.load(os.path.join(teamImagesPath, 'turnIndicatorB.png')),
+    },
     'pokeScore': pygame.image.load(os.path.join(teamImagesPath, 'scorePokeBall.png')),
     'greatScore': pygame.image.load(os.path.join(teamImagesPath, 'scoreGreatBall.png')),
 }
@@ -194,18 +199,25 @@ class Team():
         self.name = name
         self.scoreList = [] # contains pygame images for each 
         self.images = teamImgs
+        self.isTurn = False
 
         self.barImg = self.images['bar'][self.name]
 
-        self.teamSurf = pygame.Surface((154, 26), pygame.SRCALPHA)
+        self.turnIndicator = self.images['turnIndicator'][self.name]
+        self.turnIndicatorX = 0
+        self.turnIndicatorY = 40
+
+        self.teamSurf = pygame.Surface((154, 70), pygame.SRCALPHA)
         self.teamRect = self.teamSurf.get_rect()
-        self.teamRectY = WINDOWHEIGHT - 100
+        self.teamRectY = WINDOWHEIGHT - 120
         self.teamRectX = 20
         
 
         self.pointSurf = pygame.Surface((108,18), pygame.SRCALPHA)
         self.pointRect = self.pointSurf.get_rect()
         self.pointSpacing = 0
+
+        self.labelText = f'Team {self.name}'
 
 
 
@@ -225,11 +237,24 @@ class Team():
         ballX = 0
         ballY = 0
         self.teamSurf.blit(self.barImg, (0, 0))
-        for ball in self.scoreList:
+        for ball in self.scoreList: # Calculate how many balls to show
             self.pointSurf.blit(ball, (ballX, ballY))
             ballX += 18
+
         self.pointRect.topleft = (self.pointSpacing, 0)
-        self.teamSurf.blit(self.pointSurf, self.pointRect)
+        self.teamSurf.blit(self.pointSurf, self.pointRect) # Add balls to main surface
+
+        teamLabel = pokeFont().render(self.labelText, 1, BLACK)
+        teamLabelRect = teamLabel.get_rect()
+        teamLabelRect.topleft = ((20, 40))
+
+        self.teamSurf.blit(teamLabel, teamLabelRect)
+        if self.isTurn:
+
+            turnIndicatorRect = self.turnIndicator.get_rect()
+            turnIndicatorRect.topleft = (self.turnIndicatorX, self.turnIndicatorY)
+            self.teamSurf.blit(self.turnIndicator, turnIndicatorRect)
+
         self.teamRect.topleft = (self.teamRectX, self.teamRectY)
         targetSurf.blit(self.teamSurf, self.teamRect)
              
@@ -241,7 +266,7 @@ class TeamA(Team):
         super().__init__(name='A')
 
         self.barImg = self.images['bar']['A']
-        self.teamRectX = 0
+        self.teamRectX = 20
         self.pointSpacing = 20
         
 
@@ -252,6 +277,7 @@ class TeamB(Team):
 
         self.barImg = self.images['bar']['B']
         self.teamRectX = (WINDOWWIDTH - 154 - 20)
+        self.turnIndicatorX = 140
         self.pointSpacing = 8
         
 

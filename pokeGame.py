@@ -6,8 +6,9 @@ import pytweening as tween
 
 
 FPS = 30
-WINDOWWIDTH = 1024
-WINDOWHEIGHT = 768
+# To change 
+WINDOWWIDTH = assets.WINDOWWIDTH
+WINDOWHEIGHT = assets.WINDOWHEIGHT
 
 gridHeight = 192
 gridWidth =  170
@@ -15,11 +16,14 @@ gridWidth =  170
 BLACK           =(  0,   0, 0)
 WHITE           =(255, 255, 255)
 
+BKGCOLOR = WHITE
+MAINTEXTCOLOR = BLACK
+
 
 pokeBallTween = tween.easeInOutSine
 animationSpeed = 10
-ballOffset = 140
-flashOffset = 250
+ballOffset = 130
+flashOffset = 270
 
 locationAngles = [0, 60, 120, 180, 240, 300]
 
@@ -53,8 +57,10 @@ def main():
     pygame.init()
 
     FPSCLOCK = pygame.time.Clock()
+
+    
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
-    DISPLAYSURF.fill(BLACK)
+    DISPLAYSURF.fill(BKGCOLOR)
     pygame.display.set_caption('The PokeBall Game')
 
     book = 'EB2'
@@ -62,11 +68,24 @@ def main():
 
     flashImages = getFlashcards(book, unit)
 
-    questions = excelGetQuestionMessage(book, unit)    
-    correctQAPair = random.choice(questions)
+
+    # Load questions from EXCEL
+    # questions = excelGetQuestionMessage(book, unit)    
+    # correctQAPair = random.choice(questions)
+    # messages = [question.answer for question in questions]
+
+
+    # Use Closed Questions:
+    closedType = 'be'
+    correctQAPair, messages = closedQuestionType(closedType)
+
+    messages.append(correctQAPair.answer)
+    random.shuffle(messages) 
+
+
     questionSurf, questionRect = makeQuestionPanel(correctQAPair)
     
-    messages = [question.answer for question in questions]    
+    
     pokeBalls = generatePokeballs(messages)
 
     alakazam = assets.alakazam
@@ -78,13 +97,15 @@ def main():
 
     rotations = random.randint(2, 4)
     spinAnimation(pokeBalls, locationAngles, animationSpeed, DISPLAYSURF, rotations)
-    DISPLAYSURF.fill(BLACK)
+    DISPLAYSURF.fill(BKGCOLOR)
 
     lastGuess = None
     winState = None
     tries = 0
 
     while True:
+
+        DISPLAYSURF.fill(BKGCOLOR)
 
         
         mouseClick = False
@@ -127,10 +148,11 @@ def main():
         alakazamRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)   
         
 
-        
-        drawPokeBallDefaultLocations(pokeBalls, locationAngles, DISPLAYSURF)
-        drawFlashcards(flashImages, flashLocations, DISPLAYSURF)
         DISPLAYSURF.blit(alakazamImg, alakazamRect)
+        drawFlashcards(flashImages, flashLocations, DISPLAYSURF)
+        drawPokeBallDefaultLocations(pokeBalls, locationAngles, DISPLAYSURF)
+        
+        
         DISPLAYSURF.blit(questionSurf, questionRect)
 
         
@@ -176,43 +198,104 @@ def drawPokeBallDefaultLocations(pokeballs, locations, targetSurf):
 def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, rotateTimes=4):
     assets.ballSound.play()
     totalRotation = 360 * rotateTimes
-    origSurf = targetSurf.copy()
-    targetSurf.blit(origSurf, (0, 0))
+    
+    
 
     for rotationStep in range(0, totalRotation, animationSpeed):
         checkForQuit()        
         offset = pokeBallTween(rotationStep / totalRotation) * 360
+        targetSurf.fill(BKGCOLOR)
+        copySurf = targetSurf.copy()
         
         for n in range(len(pokeballs)):
             location = assets.getTrigoFromCenter((locations[n]+offset), ballOffset, WINDOWWIDTH, WINDOWHEIGHT)
             pokeballs[n].rect.center = location
-            targetSurf.blit(pokeballs[n].surface, pokeballs[n].rect)
-            pygame.display.flip()
+            copySurf.blit(pokeballs[n].surface, pokeballs[n].rect)
+            
+        targetSurf.blit(copySurf, (0, 0))
+        pygame.display.flip()
         FPSCLOCK.tick(FPS)
            
 
-def excelGetQuestionMessage(book, unit):
-    path = r'C:\Users\Administrator\Google 드라이브\ASPython\Pokemon Game\pokemonGame\quiz'
+def excelGetGameScheme(book, unit, subSet):
+    path = r'C:\Come On Python Games\resources\pokeBallGame\quiz'
     bookPath = f'{book}.xlsx'
     excelPath = os.path.join(path, bookPath)
     questions = []
 
     wb = openpyxl.load_workbook(excelPath)
     sheet = wb[unit]
-    for row in range(1, 7):
-        questionCell = sheet.cell(row=row, column=1).value
-        answerCell = sheet.cell(row=row, column=2).value
-        questions.append(assets.question(questionCell, answerCell))
 
+    if subSet == '1':
+        questionType = sheet['B9']
+        flashInstructions = sheet['A9']
+
+    elif subSet == '2':
+        questionType = sheet['B20']
+        flashInstructions = sheet['A20']
+
+    if questionType.lower() == 'open':
+        if subSet == '1':
+            rowRangeStart = 11
+            rowRangeStop = 17
+
+        elif subSet == '2':
+            rowRangeStart = 21
+            rowRangeStop = 27
+        
+        for row in range(rowRangeStart, rowRangeStop):
+            questionCell = sheet.cell(row=row, column=1).value
+            answerCell = sheet.cell(row=row, column=2).value
+            questions.append(assets.question(questionCell, answerCell))
+
+        correctQuestionAnswerPair = random.choice(questions)
+
+    elif questionType.lower() == closed:
+        pass
+
+         
+
+    
     return questions
+
+def closedQuestionType(bedo):
+    if bedo == 'be':
+        questions = [
+                ("Is he...?", "Yes, he is",  "No, he isn't"),
+                ("Is she...?", "Yes, she is",  "No, she isn't"),
+                ("Is Tom...?", "Yes, he is",  "No, he isn't"),
+                ("Is Alice...?", "Yes, she is",  "No, she isn't"),
+                ("Are they...?", "Yes, they are",  "No, they're not"),
+                ("Are you...?", "Yes, I am",  "No, I'm not")
+            ]
+    else:
+        questions = [
+                ("Does he...?", "Yes, he does",  "No, he doesn't"),
+                ("Does she...?", "Yes, she does",  "No, she doesn't"),
+                ("Does Tom...?", "Yes, he does",  "No, he doesn't"),
+                ("Does Alice...?", "Yes, she does",  "No, she doesn't"),
+                ("Do they...?", "Yes, they do",  "No, they don't"),
+                ("Do you...?", "Yes, I do",  "No, I don't")
+            ]
+
+    randomlyPickedQuestion = random.choice(questions)
+    question = randomlyPickedQuestion[0]
+    correctAnswer = randomlyPickedQuestion[1]
+    wrongAnswer = randomlyPickedQuestion[2]
+
+    rightQAPair = assets.question(question, correctAnswer)
+
+    wrongAnswerList = [wrongAnswer for _ in range(5)]
+
+    return rightQAPair, wrongAnswerList
 
 
 def makeQuestionPanel(questionObj):
 
     questionFont = assets.pokeFont(30)
-    text = questionFont.render(questionObj.question, 1, WHITE)
+    text = questionFont.render(questionObj.question, 1, MAINTEXTCOLOR)
     textRect = text.get_rect()
-    textRect.center = (WINDOWWIDTH/2, 50)
+    textRect.center = (WINDOWWIDTH/2, 30)
 
     return (text, textRect)
 
