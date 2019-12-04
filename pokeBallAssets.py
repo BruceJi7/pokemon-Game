@@ -204,8 +204,8 @@ class Team():
         self.barImg = self.images['bar'][self.name]
 
         self.turnIndicator = self.images['turnIndicator'][self.name]
-        self.turnIndicatorX = 0
-        self.turnIndicatorY = 40
+        self.turnIndicatorX = 20 + 100
+        self.turnIndicatorY = WINDOWHEIGHT - 80
 
         self.teamSurf = pygame.Surface((154, 70), pygame.SRCALPHA)
         self.teamRect = self.teamSurf.get_rect()
@@ -244,20 +244,18 @@ class Team():
         self.pointRect.topleft = (self.pointSpacing, 0)
         self.teamSurf.blit(self.pointSurf, self.pointRect) # Add balls to main surface
 
-        teamLabel = pokeFont().render(self.labelText, 1, BLACK)
+        teamLabel = pokeFont().render(self.labelText, 1, MAINTEXTCOLOR)
         teamLabelRect = teamLabel.get_rect()
         teamLabelRect.topleft = ((20, 40))
-
         self.teamSurf.blit(teamLabel, teamLabelRect)
-        if self.isTurn:
-
-            turnIndicatorRect = self.turnIndicator.get_rect()
-            turnIndicatorRect.topleft = (self.turnIndicatorX, self.turnIndicatorY)
-            self.teamSurf.blit(self.turnIndicator, turnIndicatorRect)
 
         self.teamRect.topleft = (self.teamRectX, self.teamRectY)
         targetSurf.blit(self.teamSurf, self.teamRect)
-             
+
+    def drawTurnIndicator(self, targetSurf):
+        turnIndicatorRect = self.turnIndicator.get_rect()
+        turnIndicatorRect.topleft = (self.turnIndicatorX, self.turnIndicatorY)
+        targetSurf.blit(self.turnIndicator, turnIndicatorRect)         
     
 
     
@@ -277,7 +275,7 @@ class TeamB(Team):
 
         self.barImg = self.images['bar']['B']
         self.teamRectX = (WINDOWWIDTH - 154 - 20)
-        self.turnIndicatorX = 140
+        self.turnIndicatorX = (WINDOWWIDTH - 154 - 20) 
         self.pointSpacing = 8
         
 

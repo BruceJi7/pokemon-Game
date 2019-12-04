@@ -52,7 +52,7 @@ flashLocations = [
 
 
 
-def main():
+def main(teams):
     global FPSCLOCK
     pygame.init()
 
@@ -63,10 +63,16 @@ def main():
     DISPLAYSURF.fill(BKGCOLOR)
     pygame.display.set_caption('The PokeBall Game')
 
-    book = 'EB2'
+    book = 'EB4'
     unit = 'U1'
 
     flashImages = getFlashcards(book, unit)
+
+    firstTeam = teams[0]
+    secondTeam = teams[1]
+
+
+
 
 
     # Load questions from EXCEL
@@ -76,7 +82,7 @@ def main():
 
 
     # Use Closed Questions:
-    closedType = 'be'
+    closedType = 'do'
     correctQAPair, messages = closedQuestionType(closedType)
 
     messages.append(correctQAPair.answer)
@@ -96,14 +102,20 @@ def main():
     alakazamRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
 
     rotations = random.randint(2, 4)
-    spinAnimation(pokeBalls, locationAngles, animationSpeed, DISPLAYSURF, rotations)
-    DISPLAYSURF.fill(BKGCOLOR)
 
+    spinAnimation(pokeBalls, locationAngles, animationSpeed, DISPLAYSURF, teams, rotations)
+    
     lastGuess = None
     winState = None
     tries = 0
+    teamTurn = 0
+    
+    
 
     while True:
+
+        currentTeam = teams[teamTurn]
+    
 
         DISPLAYSURF.fill(BKGCOLOR)
 
@@ -112,11 +124,11 @@ def main():
 
         checkForQuit()
 
+
         if winState:
             pygame.time.wait(1000)
-            return
-
-    
+            return teams
+   
         mouseX, mouseY = pygame.mouse.get_pos()       
         
         for event in pygame.event.get():
@@ -136,17 +148,45 @@ def main():
                         ball.state = 'open'
                     # elif ball.state == 'open':
                     #     ball.state = 'closed'
-            if alakazamRect.collidepoint(mouseX, mouseY):
-                if mouseClick:
-                    return
+            # if alakazamRect.collidepoint(mouseX, mouseY):
+            #     if mouseClick:
+            #         return teams
 
 
-        alakazam, winState = checkWin(lastGuess, correctQAPair, tries, alakazam)
+        if tries > 4:
+            alakazam.state = 'laugh'
+            winState = 'Fail'
+            teamTurn += 1
+
+        if lastGuess:
+            if lastGuess == correctQAPair.answer:
+                alakazam.state = 'ouch'
+                winState = 'Win'
+                lastGuess = None
+                if tries == 1:
+                    currentTeam.addGreatPoint()
+                else:
+                    currentTeam.addPoint()
+
+            else:
+                teamTurn += 1
+                lastGuess = None
+        if teamTurn > 1:
+            teamTurn = 0
+        
+
+            
+        # alakazam, winState, currentTeam, teamTurn = checkWin(lastGuess, correctQAPair, tries, alakazam, currentTeam, teamTurn)
 
         alakazamImg = assets.alakazam.surface
         alakazamRect = assets.alakazam.rect
         alakazamRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)   
         
+        for team in teams:
+            team.drawTeamLabel(DISPLAYSURF)
+        currentTeam.drawTurnIndicator(DISPLAYSURF)
+
+
 
         DISPLAYSURF.blit(alakazamImg, alakazamRect)
         drawFlashcards(flashImages, flashLocations, DISPLAYSURF)
@@ -156,9 +196,9 @@ def main():
         DISPLAYSURF.blit(questionSurf, questionRect)
 
         
+        
 
-
-        pygame.display.flip()
+        pygame.display.update()
 
         FPSCLOCK.tick(FPS)
 
@@ -195,7 +235,7 @@ def drawPokeBallDefaultLocations(pokeballs, locations, targetSurf):
         current.rect.center = assets.getTrigoFromCenter(locations[n], ballOffset, WINDOWWIDTH, WINDOWHEIGHT)
         targetSurf.blit(current.surface, current.rect)
 
-def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, rotateTimes=4):
+def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, teams, rotateTimes=4):
     assets.ballSound.play()
     totalRotation = 360 * rotateTimes
     
@@ -211,8 +251,12 @@ def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, rotateTimes=
             location = assets.getTrigoFromCenter((locations[n]+offset), ballOffset, WINDOWWIDTH, WINDOWHEIGHT)
             pokeballs[n].rect.center = location
             copySurf.blit(pokeballs[n].surface, pokeballs[n].rect)
+
+
             
         targetSurf.blit(copySurf, (0, 0))
+        for team in teams:
+            team.drawTeamLabel(targetSurf)
         pygame.display.flip()
         FPSCLOCK.tick(FPS)
            
@@ -323,25 +367,42 @@ def drawFlashcards(flashList, flashLocationList, targetSurf):
 
             targetSurf.blit(current, currentRect)
 
-def checkWin(lastGuess, questionPair, tries, alakazam):
+def checkWin(lastGuess, questionPair, tries, alakazam, currentTeam, teamTurn):
     win = None
+
     if tries > 4:
         alakazam.state = 'laugh'
         win = 'Fail'
+        teamTurn += 1
     if lastGuess == None:
         pass
     else:
         if lastGuess == questionPair.answer:
             alakazam.state = 'ouch'
             win = 'Win'
-    return alakazam, win
+            if tries == 1:
+                currentTeam.addGreatPoint()
+            else:
+                currentTeam.addPoint()
+        else:
+            teamTurn += 1
+    if teamTurn > 1:
+        teamTurn = 0
+    return alakazam, win, currentTeam, teamTurn
 
 
 
 
 def game():
+    sessionTeams = [assets.TeamA(), assets.TeamB()]
+    random.shuffle(sessionTeams)
+    for team in sessionTeams:
+        scoreList = []
+    
     while True:
-        main()
+        
+        random.shuffle(sessionTeams)
+        sessionTeams = main(sessionTeams)
 
 
 if __name__ == "__main__":
