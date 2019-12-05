@@ -27,6 +27,8 @@ flashOffset = 270
 
 locationAngles = [0, 60, 120, 180, 240, 300]
 
+track = 'johtoTrainerBattle'
+
 
 
 locations = [
@@ -52,47 +54,28 @@ flashLocations = [
 
 
 
-def main(teams):
+def main(teams, initObjects):
     global FPSCLOCK
     pygame.init()
 
-    FPSCLOCK = pygame.time.Clock()
+    FPSCLOCK = initObjects[0]
+    DISPLAYSURF = initObjects[1]
 
-    
-    DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
-    DISPLAYSURF.fill(BKGCOLOR)
-    pygame.display.set_caption('The PokeBall Game')
-
-    book = 'EB4'
+    book = 'EB2'
     unit = 'U1'
-
-    flashImages = getFlashcards(book, unit)
+    section = str(2)
 
     firstTeam = teams[0]
     secondTeam = teams[1]
 
+    correctQAPair, sessionQAList, sessionFlashcards = excelGetGameScheme(book, unit, section)
 
-
-
-
-    # Load questions from EXCEL
-    # questions = excelGetQuestionMessage(book, unit)    
-    # correctQAPair = random.choice(questions)
-    # messages = [question.answer for question in questions]
-
-
-    # Use Closed Questions:
-    closedType = 'do'
-    correctQAPair, messages = closedQuestionType(closedType)
-
-    messages.append(correctQAPair.answer)
-    random.shuffle(messages) 
-
+    ballMessages = [pair.answer for pair in sessionQAList]
 
     questionSurf, questionRect = makeQuestionPanel(correctQAPair)
     
-    
-    pokeBalls = generatePokeballs(messages)
+    pokeBalls = generatePokeballs(ballMessages)
+
 
     alakazam = assets.alakazam
     alakazam.state = 'normal'
@@ -116,10 +99,8 @@ def main(teams):
 
         currentTeam = teams[teamTurn]
     
-
         DISPLAYSURF.fill(BKGCOLOR)
 
-        
         mouseClick = False
 
         checkForQuit()
@@ -129,8 +110,10 @@ def main(teams):
             pygame.time.wait(1000)
             return teams
    
-        mouseX, mouseY = pygame.mouse.get_pos()       
-        
+        mouseX, mouseY = pygame.mouse.get_pos()
+
+        musicRepeat(track)
+
         for event in pygame.event.get():
             if event.type == MOUSEBUTTONUP:
                 mouseClick = True
@@ -146,12 +129,6 @@ def main(teams):
                         
                         lastGuess = ball.message
                         ball.state = 'open'
-                    # elif ball.state == 'open':
-                    #     ball.state = 'closed'
-            # if alakazamRect.collidepoint(mouseX, mouseY):
-            #     if mouseClick:
-            #         return teams
-
 
         if tries > 4:
             alakazam.state = 'laugh'
@@ -174,10 +151,6 @@ def main(teams):
         if teamTurn > 1:
             teamTurn = 0
         
-
-            
-        # alakazam, winState, currentTeam, teamTurn = checkWin(lastGuess, correctQAPair, tries, alakazam, currentTeam, teamTurn)
-
         alakazamImg = assets.alakazam.surface
         alakazamRect = assets.alakazam.rect
         alakazamRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)   
@@ -186,17 +159,12 @@ def main(teams):
             team.drawTeamLabel(DISPLAYSURF)
         currentTeam.drawTurnIndicator(DISPLAYSURF)
 
-
-
         DISPLAYSURF.blit(alakazamImg, alakazamRect)
-        drawFlashcards(flashImages, flashLocations, DISPLAYSURF)
+        drawFlashcards(sessionFlashcards, flashLocations, DISPLAYSURF)
         drawPokeBallDefaultLocations(pokeBalls, locationAngles, DISPLAYSURF)
         
         
         DISPLAYSURF.blit(questionSurf, questionRect)
-
-        
-        
 
         pygame.display.update()
 
@@ -236,6 +204,7 @@ def drawPokeBallDefaultLocations(pokeballs, locations, targetSurf):
         targetSurf.blit(current.surface, current.rect)
 
 def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, teams, rotateTimes=4):
+    musicRepeat(track)
     assets.ballSound.play()
     totalRotation = 360 * rotateTimes
     
@@ -260,47 +229,70 @@ def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, teams, rotat
         pygame.display.flip()
         FPSCLOCK.tick(FPS)
            
-
+# Mega meta function to set out the whole game questions and flashcards
 def excelGetGameScheme(book, unit, subSet):
     path = r'C:\Come On Python Games\resources\pokeBallGame\quiz'
     bookPath = f'{book}.xlsx'
     excelPath = os.path.join(path, bookPath)
-    questions = []
+
+    
 
     wb = openpyxl.load_workbook(excelPath)
     sheet = wb[unit]
 
+    sessionQuestions = []
+
+    questionType = None
+    flashInstructions = None
+
     if subSet == '1':
-        questionType = sheet['B9']
-        flashInstructions = sheet['A9']
+        questionType = sheet['A9'].value
+        flashInstructions = sheet['B9'].value
 
     elif subSet == '2':
-        questionType = sheet['B20']
-        flashInstructions = sheet['A20']
+        questionType = sheet['A19'].value
+        flashInstructions = sheet['B19'].value
 
     if questionType.lower() == 'open':
         if subSet == '1':
-            rowRangeStart = 11
-            rowRangeStop = 17
+            rowRangeStart = 10
+            rowRangeStop = 16
 
         elif subSet == '2':
-            rowRangeStart = 21
-            rowRangeStop = 27
+            rowRangeStart = 20
+            rowRangeStop = 26
         
         for row in range(rowRangeStart, rowRangeStop):
             questionCell = sheet.cell(row=row, column=1).value
             answerCell = sheet.cell(row=row, column=2).value
-            questions.append(assets.question(questionCell, answerCell))
+            sessionQuestions.append(assets.question(questionCell, answerCell))
 
-        correctQuestionAnswerPair = random.choice(questions)
+        correctQuestionAnswerPair = random.choice(sessionQuestions)
 
-    elif questionType.lower() == closed:
-        pass
+    elif questionType.lower() == 'closed':
+        if subSet == '1':
+            bedo = sheet.cell(row=10, column=1).value
+        elif subSet == '2':
+            bedo = sheet.cell(row=20, column=1).value
 
-         
+        correctQuestionAnswerPair, sessionQuestions = closedQuestionType(bedo.lower())
 
     
-    return questions
+    if flashInstructions in ('all', 'All', 'ALL'):
+        sessionFlashcards = getFlashcards(book, unit)
+    else:
+        if subSet == 1:
+            setStart = sheet['B9'].value
+            setEnd = sheet['C9'].value
+        else:
+            setStart = sheet['B19'].value
+            setEnd = sheet['C19'].value
+        
+        sessionFlashcards = getFlashcards(book, unit, [setStart, setEnd])
+
+    
+    return correctQuestionAnswerPair, sessionQuestions, sessionFlashcards 
+ 
 
 def closedQuestionType(bedo):
     if bedo == 'be':
@@ -329,9 +321,11 @@ def closedQuestionType(bedo):
 
     rightQAPair = assets.question(question, correctAnswer)
 
-    wrongAnswerList = [wrongAnswer for _ in range(5)]
+    AnswerList = [assets.question(None, wrongAnswer) for _ in range(5)]
+    AnswerList.append(rightQAPair)
+    random.shuffle(AnswerList)
 
-    return rightQAPair, wrongAnswerList
+    return rightQAPair, AnswerList
 
 
 def makeQuestionPanel(questionObj):
@@ -343,13 +337,25 @@ def makeQuestionPanel(questionObj):
 
     return (text, textRect)
 
-def getFlashcards(book, unit):
+def getFlashcards(book, unit, flashRange=None):
     basePath = r'C:\Come On Python Games\resources\pokeBallGame'
     sessionPath = os.path.join(basePath, book, unit)
 
     imagePaths = [os.path.join(sessionPath, image) for image in os.listdir(sessionPath) if os.path.splitext(image)[1] in ('.png', '.PNG')]
-    random.shuffle(imagePaths)
-    sessionImgs = random.sample(imagePaths, 6)
+    
+    if flashRange: # Flashrange is for when the parts of the unit don't work well together.
+        start = flashRange[0]
+        stop = flashRange[1]
+        imagePaths = imagePaths[start:stop]
+
+
+
+    
+    if len(imagePaths) > 6:
+        sessionImgs = random.sample(imagePaths, 6)
+    else:
+        sessionImgs = imagePaths
+        random.shuffle(sessionImgs)
 
     pyImages = [pygame.image.load(imgFile) for imgFile in sessionImgs]
 
@@ -391,18 +397,62 @@ def checkWin(lastGuess, questionPair, tries, alakazam, currentTeam, teamTurn):
     return alakazam, win, currentTeam, teamTurn
 
 
+def musicRepeat(track):
+    for event in pygame.event.get(pygame.USEREVENT):
+            pygame.mixer.music.load(assets.music[track]['main'])
+            pygame.mixer.music.set_volume(0.1)
+            pygame.mixer.music.play()       
+        
+
+def selectionMenu(initObjects):
+    FPSCLOCK = initObjects[0]
+    DISPLAYSURF = initObjects[1]
+
+    menuSurf = assets.menuBKG
+    menuRect = menuSurf.get_rect()
+    menuRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
+
+    while True:
+        checkForQuit()
+        DISPLAYSURF.fill(BKGCOLOR)
+
+
+        DISPLAYSURF.blit(menuSurf,menuRect)
+
+        pygame.display.update()
+
+        FPSCLOCK.tick(FPS)
+
+
+
+def bonusGame(teams, initObjects):
+    FPSCLOCK = initObjects[0]
+    DISPLAYSURF = initObjects[1]
+
+
 
 
 def game():
+    
+    FPSCLOCK = pygame.time.Clock()    
+    DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
+    DISPLAYSURF.fill(BKGCOLOR)
+    pygame.display.set_caption('The PokeBall Game')
+
+    initObjects = [FPSCLOCK, DISPLAYSURF] # Makes sending this into main, other screens flippin EASY tho.
+
     sessionTeams = [assets.TeamA(), assets.TeamB()]
     random.shuffle(sessionTeams)
     for team in sessionTeams:
         scoreList = []
-    
+    pygame.mixer.music.load(assets.music[track]['intro'])
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play()
+    pygame.mixer.music.set_endevent(pygame.USEREVENT)
+
     while True:
-        
-        random.shuffle(sessionTeams)
-        sessionTeams = main(sessionTeams)
+        # selectionMenu(initObjects)
+        sessionTeams = main(sessionTeams, initObjects)
 
 
 if __name__ == "__main__":

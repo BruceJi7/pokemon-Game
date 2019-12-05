@@ -191,6 +191,10 @@ teamImgs = {
 }
 
 
+menuPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\menu'
+menuBKG = pygame.image.load(os.path.join(menuPath, 'menuTable.png'))
+
+
 POINTBALLPOSX = 36
 POINTBALLPOSY = 0
 
@@ -296,6 +300,16 @@ soundPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\sound
 
 ballSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballSwirl.ogg'))
 ballOpenSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballOpen.ogg'))
+
+musicPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\music'
+
+music = {
+    'johtoTrainerBattle' :
+    {
+        'intro' : os.path.join(musicPath, 'TrainerBattleIntro.ogg'),
+        'main' : os.path.join(musicPath, 'TrainerBattleMain.ogg'),
+    }
+}
 
 
 
