@@ -27,7 +27,10 @@ flashOffset = 270
 
 locationAngles = [0, 60, 120, 180, 240, 300]
 
+quizPath = r'C:\Come On Python Games\resources\pokeBallGame\quiz'
+possibleUnits = ['U1', 'U2', 'U3']
 track = 'johtoTrainerBattle'
+teamTurn = 0
 
 
 
@@ -51,23 +54,19 @@ flashLocations = [
 
 
 
-
-
-
-def main(teams, initObjects):
-    global FPSCLOCK
+def main(teams, initObjects, teamTurn, selectionList):
+    global FPSCLOCK 
     pygame.init()
 
     FPSCLOCK = initObjects[0]
     DISPLAYSURF = initObjects[1]
 
-    book = 'EB2'
-    unit = 'U1'
+    book = selectionList[0]
+    unit = selectionList[1]
     section = str(2)
 
     firstTeam = teams[0]
     secondTeam = teams[1]
-
     correctQAPair, sessionQAList, sessionFlashcards = excelGetGameScheme(book, unit, section)
 
     ballMessages = [pair.answer for pair in sessionQAList]
@@ -91,25 +90,30 @@ def main(teams, initObjects):
     lastGuess = None
     winState = None
     tries = 0
-    teamTurn = 0
+    
+    
     
     
 
     while True:
 
-        currentTeam = teams[teamTurn]
-    
         DISPLAYSURF.fill(BKGCOLOR)
+        if teamTurn > 1:
+            teamTurn = 0
+
+        currentTeam = teams[teamTurn]
+        currentTeam.drawTurnIndicator(DISPLAYSURF)
+        
+    
+        
 
         mouseClick = False
+        lastGuess = None
+
 
         checkForQuit()
 
 
-        if winState:
-            pygame.time.wait(1000)
-            return teams
-   
         mouseX, mouseY = pygame.mouse.get_pos()
 
         musicRepeat(track)
@@ -128,28 +132,24 @@ def main(teams, initObjects):
                         tries += 1
                         
                         lastGuess = ball.message
-                        ball.state = 'open'
-
-        if tries > 4:
-            alakazam.state = 'laugh'
-            winState = 'Fail'
-            teamTurn += 1
+                        ball.state = 'open'    
 
         if lastGuess:
             if lastGuess == correctQAPair.answer:
                 alakazam.state = 'ouch'
                 winState = 'Win'
-                lastGuess = None
+                
+                
                 if tries == 1:
                     currentTeam.addGreatPoint()
                 else:
                     currentTeam.addPoint()
+            teamTurn += 1
 
-            else:
-                teamTurn += 1
-                lastGuess = None
-        if teamTurn > 1:
-            teamTurn = 0
+        if tries > 4:
+            alakazam.state = 'laugh'
+            winState = 'Fail'
+            
         
         alakazamImg = assets.alakazam.surface
         alakazamRect = assets.alakazam.rect
@@ -157,7 +157,7 @@ def main(teams, initObjects):
         
         for team in teams:
             team.drawTeamLabel(DISPLAYSURF)
-        currentTeam.drawTurnIndicator(DISPLAYSURF)
+        
 
         DISPLAYSURF.blit(alakazamImg, alakazamRect)
         drawFlashcards(sessionFlashcards, flashLocations, DISPLAYSURF)
@@ -166,9 +166,16 @@ def main(teams, initObjects):
         
         DISPLAYSURF.blit(questionSurf, questionRect)
 
+        
+   
+
         pygame.display.update()
 
-        FPSCLOCK.tick(FPS)
+        FPSCLOCK.tick(FPS)           
+
+        if winState:
+            pygame.time.wait(1000)
+            return teams, teamTurn
 
 
 def terminate():
@@ -404,7 +411,7 @@ def musicRepeat(track):
             pygame.mixer.music.play()       
         
 
-def selectionMenu(initObjects):
+def selectionMenu(initObjects, menuList):
     FPSCLOCK = initObjects[0]
     DISPLAYSURF = initObjects[1]
 
@@ -412,12 +419,54 @@ def selectionMenu(initObjects):
     menuRect = menuSurf.get_rect()
     menuRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
 
+       
+    menuLabels = [assets.pokeFont(30).render(label, 1, assets.MAINTEXTCOLOR) for label in menuList]
+    menuRects = [label.get_rect() for label in menuLabels]
+
+    menuLeftBorder = WINDOWWIDTH/2 - 200
+    menuTopBorder = WINDOWHEIGHT/2 - 100
+    menuSpacing = 35
+
+    selectionIcon = assets.teamImgs['turnIndicator']['B']
+    selectionRect = selectionIcon.get_rect()
+    selectionX = menuLeftBorder - 20
+    selection = 0
+    
+
+    for n in range(len(menuLabels)):
+        menuRects[n].topleft = (menuLeftBorder, (menuTopBorder + menuSpacing * n))
+        
+
+
     while True:
         checkForQuit()
+        musicRepeat(track)
         DISPLAYSURF.fill(BKGCOLOR)
-
-
         DISPLAYSURF.blit(menuSurf,menuRect)
+
+        
+        for n in range(len(menuLabels)):
+            DISPLAYSURF.blit(menuLabels[n], menuRects[n])
+
+        for event in pygame.event.get():
+            if event.type == KEYUP:
+                assets.selectSound.play()
+                if event.key == K_UP:
+                    selection -= 1
+                elif event.key == K_DOWN:
+                    selection += 1
+                elif event.key == K_RETURN:
+                    return menuList[selection]
+        
+
+        if selection < 0:
+            selection = 0
+        elif selection > len(menuLabels)-1:
+            selection = len(menuLabels)-1
+        
+        selectionY = (menuTopBorder + menuSpacing * selection + 5)
+        selectionRect.topleft = (selectionX, selectionY)
+        DISPLAYSURF.blit(selectionIcon, selectionRect)
 
         pygame.display.update()
 
@@ -429,7 +478,11 @@ def bonusGame(teams, initObjects):
     FPSCLOCK = initObjects[0]
     DISPLAYSURF = initObjects[1]
 
-
+def beginMusic(track):
+    pygame.mixer.music.load(assets.music[track]['intro'])
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play()
+    pygame.mixer.music.set_endevent(pygame.USEREVENT)
 
 
 def game():
@@ -443,16 +496,24 @@ def game():
 
     sessionTeams = [assets.TeamA(), assets.TeamB()]
     random.shuffle(sessionTeams)
+
+
     for team in sessionTeams:
         scoreList = []
-    pygame.mixer.music.load(assets.music[track]['intro'])
-    pygame.mixer.music.set_volume(0.1)
-    pygame.mixer.music.play()
-    pygame.mixer.music.set_endevent(pygame.USEREVENT)
 
+    teamTurn = 0
+
+    books = [os.path.splitext(title)[0] for title in os.listdir(quizPath) if os.path.splitext(title)[1] in ('.xlsx', '.XLSX')]
+    
+    bookSelection = selectionMenu(initObjects, books)
+    unitSelection = selectionMenu(initObjects, possibleUnits)
+    selectionList = [bookSelection, unitSelection]
+    print(selectionList)
+    beginMusic(track)
+        
     while True:
-        # selectionMenu(initObjects)
-        sessionTeams = main(sessionTeams, initObjects)
+        
+        sessionTeams, teamTurn = main(sessionTeams, initObjects, teamTurn, selectionList)
 
 
 if __name__ == "__main__":

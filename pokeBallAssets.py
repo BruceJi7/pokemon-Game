@@ -300,6 +300,7 @@ soundPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\sound
 
 ballSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballSwirl.ogg'))
 ballOpenSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballOpen.ogg'))
+selectSound = pygame.mixer.Sound(os.path.join(soundPath, 'wink.ogg'))
 
 musicPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\music'
 
