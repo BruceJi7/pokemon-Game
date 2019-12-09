@@ -29,7 +29,10 @@ locationAngles = [0, 60, 120, 180, 240, 300]
 
 quizPath = r'C:\Come On Python Games\resources\pokeBallGame\quiz'
 possibleUnits = ['U1', 'U2', 'U3']
-track = 'johtoTrainerBattle'
+subSets = ['1', '2']
+tracks = ['johtoTrainerBattle', 'gymBattle', 'darkCave', 'route']
+track = random.choice(tracks)
+menuTrack = 'menu'
 teamTurn = 0
 
 
@@ -63,7 +66,7 @@ def main(teams, initObjects, teamTurn, selectionList):
 
     book = selectionList[0]
     unit = selectionList[1]
-    section = str(2)
+    section = selectionList[2]
 
     firstTeam = teams[0]
     secondTeam = teams[1]
@@ -260,6 +263,8 @@ def excelGetGameScheme(book, unit, subSet):
         questionType = sheet['A19'].value
         flashInstructions = sheet['B19'].value
 
+    
+
     if questionType.lower() == 'open':
         if subSet == '1':
             rowRangeStart = 10
@@ -268,7 +273,8 @@ def excelGetGameScheme(book, unit, subSet):
         elif subSet == '2':
             rowRangeStart = 20
             rowRangeStop = 26
-        
+    
+
         for row in range(rowRangeStart, rowRangeStop):
             questionCell = sheet.cell(row=row, column=1).value
             answerCell = sheet.cell(row=row, column=2).value
@@ -288,12 +294,13 @@ def excelGetGameScheme(book, unit, subSet):
     if flashInstructions in ('all', 'All', 'ALL'):
         sessionFlashcards = getFlashcards(book, unit)
     else:
-        if subSet == 1:
-            setStart = sheet['B9'].value
-            setEnd = sheet['C9'].value
+        if subSet == '1':
+            setStart = int(sheet['B9'].value)
+            setEnd = int(sheet['C9'].value)
         else:
-            setStart = sheet['B19'].value
-            setEnd = sheet['C19'].value
+            setStart = int(sheet['B19'].value)
+            setEnd = int(sheet['C19'].value)
+        
         
         sessionFlashcards = getFlashcards(book, unit, [setStart, setEnd])
 
@@ -440,7 +447,7 @@ def selectionMenu(initObjects, menuList):
 
     while True:
         checkForQuit()
-        musicRepeat(track)
+        musicRepeat(menuTrack)
         DISPLAYSURF.fill(BKGCOLOR)
         DISPLAYSURF.blit(menuSurf,menuRect)
 
@@ -504,10 +511,11 @@ def game():
     teamTurn = 0
 
     books = [os.path.splitext(title)[0] for title in os.listdir(quizPath) if os.path.splitext(title)[1] in ('.xlsx', '.XLSX')]
-    
+    beginMusic(menuTrack)
     bookSelection = selectionMenu(initObjects, books)
     unitSelection = selectionMenu(initObjects, possibleUnits)
-    selectionList = [bookSelection, unitSelection]
+    subSetSelection = selectionMenu(initObjects, subSets)
+    selectionList = [bookSelection, unitSelection, subSetSelection]
     print(selectionList)
     beginMusic(track)
         

@@ -309,6 +309,27 @@ music = {
     {
         'intro' : os.path.join(musicPath, 'TrainerBattleIntro.ogg'),
         'main' : os.path.join(musicPath, 'TrainerBattleMain.ogg'),
+    },
+    'gymBattle' :
+    {
+        'intro' : os.path.join(musicPath, 'gymIntro.ogg'),
+        'main' : os.path.join(musicPath, 'gymMain.ogg'),
+    },
+    'darkCave' :
+    {
+        'intro' : os.path.join(musicPath, 'darkIntro.ogg'),
+        'main' : os.path.join(musicPath, 'darkMain.ogg'),
+    },
+    'route' :
+    {
+        'intro' : os.path.join(musicPath, 'routeIntro.ogg'),
+        'main' : os.path.join(musicPath, 'routeMain.ogg'),
+    },
+
+
+    'menu' : {
+        'intro' : os.path.join(musicPath, 'menuIntro.ogg'),
+        'main' : os.path.join(musicPath, 'menuMain.ogg'),
     }
 }
 
