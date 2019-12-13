@@ -579,7 +579,7 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
         FPSCLOCK.tick(FPS)
     
     # Waiting animation
-    waitTime = random.randint(6, 30)
+    waitTime = random.randint(20, 30)
     for waitStep in range(1, waitTime):
         checkForQuit()
         pygame.display.flip()
@@ -644,9 +644,15 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
         
         WAITING = True
         while WAITING:
-            for event in pygame.event.get(KEYUP):
-                if event.key in (K_RETURN, K_KP_ENTER):
-                    WAITING = False
+            checkForQuit()
+            for event in pygame.event.get():
+                if event.type == KEYUP:
+                    if event.key in (K_RETURN, K_KP_ENTER):
+                        WAITING = False
+                    else:
+                        continue
+            pygame.display.flip()
+            FPSCLOCK.tick(FPS)
 
 
 
