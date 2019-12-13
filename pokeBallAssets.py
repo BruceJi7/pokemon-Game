@@ -1,4 +1,4 @@
-import pygame, os, math
+import pygame, os, math, random
 
 
 WINDOWWIDTH = 1024
@@ -16,39 +16,17 @@ CLEAR           =(  0,   0,   0,  0)
 BKGCOLOR = WHITE
 MAINTEXTCOLOR = BLACK
 
+POINTBALLPOSX = 36
+POINTBALLPOSY = 0
+
+
 pygame.init()
 
+def pokeFont(size=20):
+    return pygame.font.SysFont('minecraft', size)
 
-class Menubutton():
-    def __init__(self, path, series, gameType, state='up', surface=None):
-        self.path = path
-        self.__state = state
-        self.series = series
-        self.gameType = gameType
-        self.__surface = surface
-        self.rect = self.makeRect()
-        
-        # self.surface = self.path[self.state]
-        # self.rect = self.surface.get_rect()
+pokeBallFont = pokeFont(20)
 
-
-
-
-    @property
-    def state(self):
-        return self.__state
-
-
-    @state.setter
-    def state(self, setState):
-        self.__state = setState
-
-    @property
-    def surface(self):
-        return self.path[self.state]
-
-    def makeRect(self):
-        return self.surface.get_rect()
 
 alakaPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\alakazam'
 alakazamImg = {
@@ -66,10 +44,128 @@ pokeballImgs = {
     'closed' : pygame.image.load(os.path.join(pokeBallPath, 'pokeballClosed.png')),
 }
 
-def pokeFont(size=20):
-    return pygame.font.SysFont('minecraft', size)
 
-pokeBallFont = pokeFont(20)
+
+teamImagesPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\team'
+teamImgs = {
+    'bar': {
+        'A': pygame.image.load(os.path.join(teamImagesPath, 'teamBarA.png')),
+        'B': pygame.image.load(os.path.join(teamImagesPath, 'teamBarB.png')),
+    },
+    'turnIndicator':
+    {
+        'A': pygame.image.load(os.path.join(teamImagesPath, 'turnIndicatorA.png')),
+        'B': pygame.image.load(os.path.join(teamImagesPath, 'turnIndicatorB.png')),
+    },
+    'pokeScore': pygame.image.load(os.path.join(teamImagesPath, 'scorePokeBall.png')),
+    'greatScore': pygame.image.load(os.path.join(teamImagesPath, 'scoreGreatBall.png')),
+}
+
+
+menuPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\menu'
+menuBKG = pygame.image.load(os.path.join(menuPath, 'menuTable.png'))
+
+soundPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\sounds'
+
+ballSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballSwirl.ogg'))
+ballOpenSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballOpen.ogg'))
+selectSound = pygame.mixer.Sound(os.path.join(soundPath, 'wink.ogg'))
+ballBounceSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballBounceSound.ogg'))
+ballShakeSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballShakeSound.ogg'))
+catchFailSound = pygame.mixer.Sound(os.path.join(soundPath, 'catchFailSound.ogg'))
+throwSound = pygame.mixer.Sound(os.path.join(soundPath, 'throwSound.ogg'))
+critHitSound = pygame.mixer.Sound(os.path.join(soundPath, 'critHit.ogg'))
+runAwaySound = pygame.mixer.Sound(os.path.join(soundPath, 'runAway.ogg'))
+nopeSound = pygame.mixer.Sound(os.path.join(soundPath, 'nope.ogg'))
+hitSound = pygame.mixer.Sound(os.path.join(soundPath, 'hit.ogg'))
+
+
+
+musicPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\music'
+
+music = {
+    'johtoTrainerBattle' :
+    {
+        'intro' : os.path.join(musicPath, 'TrainerBattleIntro.ogg'),
+        'main' : os.path.join(musicPath, 'TrainerBattleMain.ogg'),
+    },
+    'gymBattle' :
+    {
+        'intro' : os.path.join(musicPath, 'gymIntro.ogg'),
+        'main' : os.path.join(musicPath, 'gymMain.ogg'),
+    },
+    'darkCave' :
+    {
+        'intro' : os.path.join(musicPath, 'darkIntro.ogg'),
+        'main' : os.path.join(musicPath, 'darkMain.ogg'),
+    },
+    'route' :
+    {
+        'intro' : os.path.join(musicPath, 'routeIntro.ogg'),
+        'main' : os.path.join(musicPath, 'routeMain.ogg'),
+    },
+    'menu' : {
+        'intro' : os.path.join(musicPath, 'menuIntro.ogg'),
+        'main' : os.path.join(musicPath, 'menuMain.ogg'),
+    },
+    'victory' : {
+        'intro' : os.path.join(musicPath, 'mainVictoryIntro.ogg'),
+        'main' : os.path.join(musicPath, 'mainVictoryMain.ogg'),
+    },
+    'bonus' : {
+        'intro' : os.path.join(musicPath, 'bonusVictoryIntro.ogg'),
+        'main' : os.path.join(musicPath, 'bonusVictoryMain.ogg'),
+    }
+}
+
+bonusPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\pokes'
+bonusPokemonImages = {
+    'bulbasaur' : [os.path.join(bonusPath, 'bulbasaur.png'), 20],
+    'squirtle' : [os.path.join(bonusPath, 'squirtle.png'), 20],
+    'charmander' : [os.path.join(bonusPath, 'charmander.png'), 20],
+    'charizard' : [os.path.join(bonusPath, 'charizard.png'), 10],
+    'pikachu' : [os.path.join(bonusPath, 'pikachu.png'), 18],
+    'raichu' : [os.path.join(bonusPath, 'raichu.png'), 12],
+    'ekans' : [os.path.join(bonusPath, 'ekans.png'), 16],
+    'eevee' : [os.path.join(bonusPath, 'eevee.png'), 18],
+    'zapdos' : [os.path.join(bonusPath, 'zapdos.png'), 6],
+    'mewtwo' : [os.path.join(bonusPath, 'mewtwo.png'), 3],
+    'suicune' : [os.path.join(bonusPath, 'suicune.png'), 2],
+}
+
+bonusBallPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\ball'
+bonusBallImages = {
+    'P': {
+        'closed': pygame.image.load(os.path.join(bonusBallPath, 'bonusPokeClosed.png')),
+        'open': pygame.image.load(os.path.join(bonusBallPath, 'bonusPokeOpen.png')),
+    },
+    'G': {
+        'closed': pygame.image.load(os.path.join(bonusBallPath, 'bonusGreatClosed.png')),
+        'open': pygame.image.load(os.path.join(bonusBallPath, 'bonusGreatOpen.png')),
+    },
+}
+
+
+def getRandomPoke(imageDict=bonusPokemonImages):
+    pokemonChanceList = []
+    for value in imageDict.values():
+        for _ in range(value[1]):
+            pokemonChanceList.append(value[0])
+    return random.choice(pokemonChanceList)
+
+
+class bonusPokemon():
+    def __init__(self, pokeImagePath):
+        self.path = pokeImagePath
+        self.rect = self.makeRect()
+
+    @property
+    def surface(self):
+        return pygame.image.load(self.path)
+
+    def makeRect(self):
+        return self.surface.get_rect()      
+
 
 class pokeball():
     def __init__(self, pathDict, message=None, state=None):
@@ -175,33 +271,46 @@ class question():
 
 
 
-teamImagesPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\team'
-teamImgs = {
-    'bar': {
-        'A': pygame.image.load(os.path.join(teamImagesPath, 'teamBarA.png')),
-        'B': pygame.image.load(os.path.join(teamImagesPath, 'teamBarB.png')),
-    },
-    'turnIndicator':
-    {
-        'A': pygame.image.load(os.path.join(teamImagesPath, 'turnIndicatorA.png')),
-        'B': pygame.image.load(os.path.join(teamImagesPath, 'turnIndicatorB.png')),
-    },
-    'pokeScore': pygame.image.load(os.path.join(teamImagesPath, 'scorePokeBall.png')),
-    'greatScore': pygame.image.load(os.path.join(teamImagesPath, 'scoreGreatBall.png')),
-}
+
+class Menubutton():
+    def __init__(self, path, series, gameType, state='up', surface=None):
+        self.path = path
+        self.__state = state
+        self.series = series
+        self.gameType = gameType
+        self.__surface = surface
+        self.rect = self.makeRect()
+        
+        # self.surface = self.path[self.state]
+        # self.rect = self.surface.get_rect()
 
 
-menuPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\menu'
-menuBKG = pygame.image.load(os.path.join(menuPath, 'menuTable.png'))
 
 
-POINTBALLPOSX = 36
-POINTBALLPOSY = 0
+    @property
+    def state(self):
+        return self.__state
+
+
+    @state.setter
+    def state(self, setState):
+        self.__state = setState
+
+    @property
+    def surface(self):
+        return self.path[self.state]
+
+    def makeRect(self):
+        return self.surface.get_rect()
+
+
+
 
 class Team():
     def __init__(self, name):
         self.name = name
-        self.scoreList = [] # contains pygame images for each 
+        self.scoreList = [] # Contains a letter for each type of point
+        
         self.images = teamImgs
         self.isTurn = False
 
@@ -230,19 +339,41 @@ class Team():
     def score(self):
         return len(self.scoreList)
     
+        
+    @property
+    def hasWon(self):
+        if self.score >= 4:
+            return True
+        else:
+            return False
 
     def addPoint(self):
-        self.scoreList.append(self.images['pokeScore'])
+        self.scoreList.append('P')
 
     def addGreatPoint(self):
-        self.scoreList.append(self.images['greatScore'])
+        self.scoreList.append('G')
+
+    @property
+    def popPoint(self):
+        scoreList = self.scoreList
+        lastPoint = scoreList.pop()
+        self.scoreList = scoreList
+        return lastPoint
+
+    
 
     def drawTeamLabel(self, targetSurf):
         ballX = 0
         ballY = 0
         self.teamSurf.blit(self.barImg, (0, 0))
-        for ball in self.scoreList: # Calculate how many balls to show
-            self.pointSurf.blit(ball, (ballX, ballY))
+        self.pointSurf.fill(BKGCOLOR)
+        for ball in self.scoreList:
+            if ball == "P":
+                ballImage = self.images['pokeScore']
+            elif ball == "G":
+                ballImage = self.images['greatScore']
+                 # Calculate how many balls to show
+            self.pointSurf.blit(ballImage, (ballX, ballY))
             ballX += 18
 
         self.pointRect.topleft = (self.pointSpacing, 0)
@@ -296,45 +427,6 @@ class TeamB(Team):
 
 
 
-soundPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\sounds'
-
-ballSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballSwirl.ogg'))
-ballOpenSound = pygame.mixer.Sound(os.path.join(soundPath, 'ballOpen.ogg'))
-selectSound = pygame.mixer.Sound(os.path.join(soundPath, 'wink.ogg'))
-
-musicPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\music'
-
-music = {
-    'johtoTrainerBattle' :
-    {
-        'intro' : os.path.join(musicPath, 'TrainerBattleIntro.ogg'),
-        'main' : os.path.join(musicPath, 'TrainerBattleMain.ogg'),
-    },
-    'gymBattle' :
-    {
-        'intro' : os.path.join(musicPath, 'gymIntro.ogg'),
-        'main' : os.path.join(musicPath, 'gymMain.ogg'),
-    },
-    'darkCave' :
-    {
-        'intro' : os.path.join(musicPath, 'darkIntro.ogg'),
-        'main' : os.path.join(musicPath, 'darkMain.ogg'),
-    },
-    'route' :
-    {
-        'intro' : os.path.join(musicPath, 'routeIntro.ogg'),
-        'main' : os.path.join(musicPath, 'routeMain.ogg'),
-    },
-
-
-    'menu' : {
-        'intro' : os.path.join(musicPath, 'menuIntro.ogg'),
-        'main' : os.path.join(musicPath, 'menuMain.ogg'),
-    }
-}
-
-
-
 # Trig Functions
 def degToRadian(deg):
     return deg * math.pi / 180
@@ -369,6 +461,9 @@ def getTrigoFromCenter(deg, hypo, WINDOWWIDTH, WINDOWHEIGHT):
 
     return (trigX + WINDOWWIDTH/2, trigY+WINDOWHEIGHT/2)
 
+def getTrigoForArc(deg, hypo, centreX, centreY):
+    trigX, trigY = getTrigoXY(deg, hypo)
 
+    return (trigX + centreX, trigY+centreY)
 
 
