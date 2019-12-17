@@ -131,7 +131,9 @@ def main(teams, initObjects, teamTurn, selectionList):
             
 
         for ball in pokeBalls:
-            if ball.rect.collidepoint(mouseX, mouseY):
+            collideRect = ball.rect.copy()
+            collideRect.inflate_ip(-120, -30)
+            if collideRect.collidepoint(mouseX, mouseY):
                 if mouseClick:
                     
                     if ball.state == 'closed':
@@ -428,7 +430,7 @@ def checkWin(lastGuess, questionPair, tries, alakazam, currentTeam, teamTurn):
 def musicRepeat(track):
     for event in pygame.event.get(pygame.USEREVENT):
             pygame.mixer.music.load(assets.music[track]['main'])
-            pygame.mixer.music.set_volume(0.1)
+            pygame.mixer.music.set_volume(0.2)
             pygame.mixer.music.play()       
         
 
@@ -498,13 +500,21 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
     
     
 
-    if lastScoredPoint == 'G':
-        pokeBallImg = assets.bonusBallImages['G']['closed']
-    else:
-        pokeBallImg = assets.bonusBallImages['P']['closed']
+    # if lastScoredPoint == 'G':
+    #     pokeBallImg = assets.bonusBallImages['G']['closed']
+    # else:
+    #     pokeBallImg = assets.bonusBallImages['P']['closed']
 
+    pokeBall = assets.bonusPokeBall
 
-    pokeBallRect = pokeBallImg.get_rect()
+    pokeBall.ballType = lastScoredPoint
+    pokeBall.state = 'closed'
+
+    pokeBallImg = pokeBall.surface
+    pokeBallRect = pokeBall.rect
+
+    
+    
 
     totalRotation = 100
     dropDistance = 300
@@ -554,10 +564,43 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
     # Pokemon Goes Into Ball section will go here:
 
     assets.ballOpenSound.play()
+
+    pokeBall.state = 'open'
+    pokeBallImg = pokeBall.surface
+
+    for animFrame in assets.bonusBallCatch:
+        for time in range (0, 10):
+            checkForQuit()
+            if time == 1:
+                animFrameSurf = animFrame
+                animFrameRect = animFrame.get_rect()
+                animFrameRect.centerx = pokeBallRect.centerx
+                animFrameRect.centery = pokeBallRect.centery
+
+                targetSurf.fill(BKGCOLOR)
+                copySurf = targetSurf.copy()
+                copySurf.blit(bonusPokemon.surface, bonusPokemon.rect)
+                copySurf.blit(pokeBallImg, pokeBallRect)
+                copySurf.blit(animFrameSurf, animFrameRect)
+
+
+                targetSurf.blit(copySurf, (0, 0))
+                for team in teams:
+                    team.drawTeamLabel(targetSurf)
+
+                pygame.display.flip()
+                FPSCLOCK.tick(FPS)
+
+
+
+
+
     
     
     # Drop and bounce animation
-    
+    pokeBall.state = 'closed'
+    pokeBallImg = pokeBall.surface
+
     soundPlayed = False
     for dropStep in range(1, 100, animationSpeed):
         checkForQuit()
@@ -631,7 +674,35 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
         
 
     if not caught:
+
         assets.catchFailSound.play()
+
+        for animFrame in assets.bonusBallCatch:
+            for time in range (0, 10):
+                checkForQuit()
+                if time == 1:
+                    animFrameSurf = animFrame
+                    animFrameRect = animFrame.get_rect()
+                    animFrameRect.centerx = pokeBallRect.centerx
+                    animFrameRect.centery = pokeBallRect.centery
+
+                    targetSurf.fill(BKGCOLOR)
+                    copySurf = targetSurf.copy()
+                    copySurf.blit(bonusPokemon.surface, bonusPokemon.rect)
+                    copySurf.blit(animFrameSurf, animFrameRect)
+
+
+                    targetSurf.blit(copySurf, (0, 0))
+                    for team in teams:
+                        team.drawTeamLabel(targetSurf)
+
+                    pygame.display.flip()
+                    FPSCLOCK.tick(FPS)
+
+            pygame.display.flip()
+            FPSCLOCK.tick(FPS)    
+
+
         for waitStep in range(1, 20):
             checkForQuit()
             copySurf.fill(BKGCOLOR)
@@ -655,14 +726,23 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
             FPSCLOCK.tick(FPS)
 
 
+def rollToCatch(ballType):
+    firstChance = random.randint(0, 100)
+    if ballType == 'P':
+        return firstChance
+    else:
+        secondChance = random.randint(0, 95)
+        return max([firstChance, secondChance])
+
+
+
 
 def catchMechanic(ballType):
-    catchChance = random.randint(0, 100)
-    if ballType == 'G':
-        catchChance += 15
+    catchChance = rollToCatch(ballType)
+
     print(f'Ball type {ballType}, catch chance {catchChance}.')
     
-    if catchChance > 90:
+    if catchChance > 85:
         return True, 3
     
     return False, random.randint(1, 3)
@@ -678,7 +758,7 @@ def bonusGame(teams, teamTurn, initObjects, bonusPokemon):
     while RUNNING:
 
         DISPLAYSURF.fill(BKGCOLOR)
-
+        
         if teamTurn > 1:
             teamTurn = 0
 
@@ -702,7 +782,7 @@ def bonusGame(teams, teamTurn, initObjects, bonusPokemon):
     
 def beginMusic(track):
     pygame.mixer.music.load(assets.music[track]['intro'])
-    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.set_volume(0.2)
     pygame.mixer.music.play()
     pygame.mixer.music.set_endevent(pygame.USEREVENT)
 
@@ -859,12 +939,13 @@ def game():
     for team in sessionTeams:
         if 'G' in team.scoreList:
             bonusPokemon = assets.bonusPokemon(assets.getRandomPoke())
-            caught, bonusWinner = bonusGame(sessionTeams, teamTurn, initObjects, bonusPokemon)
+            caught, bonusWinner = bonusGame(sessionTeams, teamTurn+1, initObjects, bonusPokemon)
             if caught and bonusWinner:
                 bonusSuccess(bonusWinner, initObjects, bonusPokemon)
             else:
                 assets.runAwaySound.play()
                 bonusFail(initObjects)
+                
 
        
 

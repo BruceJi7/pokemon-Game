@@ -144,6 +144,46 @@ bonusBallImages = {
         'open': pygame.image.load(os.path.join(bonusBallPath, 'bonusGreatOpen.png')),
     },
 }
+bonusCatchPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\catchAnim'
+bonusBallCatch = [pygame.image.load(os.path.join(bonusCatchPath, imageFile)) for imageFile in os.listdir(bonusCatchPath) if os.path.splitext(imageFile)[1] in ('.png', '.PNG')]
+
+class bonusBall():
+    def __init__(self):
+        self.__Type = None
+        self.dict = bonusBallImages
+        self.__state = 'closed'
+    
+    @property
+    def state(self):
+        return self.__state
+
+    @state.setter
+    def state(self, setState):
+        self.__state = setState
+
+    @property
+    def ballType(self):
+        return self.__type
+
+    @ballType.setter
+    def ballType(self, setType):
+        self.__type = setType
+    
+    @property
+    def surface(self):
+        image = self.dict[self.ballType][self.state]
+        newSurf = pygame.Surface((40, 60), pygame.SRCALPHA)
+        newSurf.fill(BKGCOLOR)
+        newSurf.blit(image, (0, 0))
+        return newSurf
+
+
+    @property
+    def rect(self):
+        return self.surface.get_rect()        
+
+bonusPokeBall = bonusBall()
+
 
 
 def getRandomPoke(imageDict=bonusPokemonImages):
@@ -175,6 +215,8 @@ class pokeball():
         self.__surface = None
         self.rect = self.makeRect()
 
+        
+
 
     # State Setter/Getter
     @property
@@ -193,8 +235,6 @@ class pokeball():
     @message.setter
     def message(self, setMessage):
         self.__message = setMessage
-
-
 
     @property
     def surface(self):
@@ -224,13 +264,12 @@ class pokeball():
 
             self.__surface.blit(openBall, openBallRect)
             self.__surface.blit(text, messageRect)
-            
+
             return self.__surface
 
 
     def makeRect(self):
         return self.surface.get_rect()
-
 
 class alakazamChar():
     def __init__(self, path, state='normal', surface=None):
