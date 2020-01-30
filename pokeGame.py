@@ -26,8 +26,8 @@ bounceTween = tween.easeOutBounce
 pokeBallTween = tween.easeInOutSine
 throwAnimationSpeed = 5
 animationSpeed = 10
-ballOffset = 130
-flashOffset = 270
+ballOffset = 140
+flashOffset = 280
 
 locationAngles = [0, 60, 120, 180, 240, 300]
 
@@ -100,7 +100,9 @@ def main(teams, initObjects, teamTurn, selectionList):
     winState = None
     tries = 0
     
-    
+
+    #Test
+   
     
     
 
@@ -514,7 +516,7 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
     
 
     totalRotation = 100
-    dropDistance = 300
+    dropDistance = 200
     bounceHeight = 100
 
     if currentTeam.name == 'A':
@@ -528,7 +530,7 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
         arcCentreY = 600
         reverseMode = 1
 
-    bonusPokemon.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/3)
+    # bonusPokemon.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/3)
     
 
     # Throw Arc Animation part
@@ -537,19 +539,13 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
         checkForQuit()        
         offset = (throwTween(rotationStep / totalRotation) * 80)
         offset *= reverseMode
-        targetSurf.fill(BKGCOLOR)
-        copySurf = targetSurf.copy()
-        distFromRotationalCentre = 400
+        targetSurf.blit(bkgImg, (0,0))
+        distFromRotationalCentre = 300
 
         location = assets.getTrigoForArc(startingLocation + offset, distFromRotationalCentre, arcCentreX, arcCentreY)
         pokeBallRect.center = location
-        copySurf.blit(bonusPokemon.surface, bonusPokemon.rect)
-        copySurf.blit(pokeBallImg, pokeBallRect)
-        
-
-
-            
-        targetSurf.blit(copySurf, (0, 0))
+        targetSurf.blit(bonusPokemon.surface, bonusPokemon.rect)
+        targetSurf.blit(pokeBallImg, pokeBallRect)
 
         currentTeam.drawTeamLabel(targetSurf)
 
@@ -574,14 +570,12 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
                 animFrameRect.centerx = pokeBallRect.centerx
                 animFrameRect.centery = pokeBallRect.centery
 
-                targetSurf.fill(BKGCOLOR)
-                copySurf = targetSurf.copy()
-                copySurf.blit(bonusPokemon.surface, bonusPokemon.rect)
-                copySurf.blit(pokeBallImg, pokeBallRect)
-                copySurf.blit(animFrameSurf, animFrameRect)
+                targetSurf.blit(bkgImg, (0,0))
+                
+                targetSurf.blit(bonusPokemon.surface, bonusPokemon.rect)
+                targetSurf.blit(pokeBallImg, pokeBallRect)
+                targetSurf.blit(animFrameSurf, animFrameRect)
 
-
-                targetSurf.blit(copySurf, (0, 0))
                 currentTeam.drawTeamLabel(targetSurf)
 
                 pygame.display.flip()
@@ -602,12 +596,11 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
         checkForQuit()
         offset =  dropDistance * (bounceTween(dropStep/100))
 
-        targetSurf.fill(BKGCOLOR)
-        copySurf = targetSurf.copy()
+        targetSurf.blit(bkgImg, (0,0))
+        
         pokeBallRect.centery = startingCentery + offset
-        copySurf.blit(pokeBallImg, pokeBallRect)
+        targetSurf.blit(pokeBallImg, pokeBallRect)
 
-        targetSurf.blit(copySurf, (0, 0))
         currentTeam.drawTeamLabel(targetSurf)
         if dropStep > 50 and soundPlayed == False:
             assets.ballBounceSound.play()
@@ -634,12 +627,10 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
             checkForQuit()
             
             offset =  (jumpHeight * (wobbleTween(jumpStep/100)))
-            targetSurf.fill(BKGCOLOR)
-            copySurf = targetSurf.copy()
+            targetSurf.blit(bkgImg, (0,0))
+            
             pokeBallRect.centery = jumpStartY - offset
-            copySurf.blit(pokeBallImg, pokeBallRect)
-
-            targetSurf.blit(copySurf, (0, 0))
+            targetSurf.blit(pokeBallImg, pokeBallRect)
             currentTeam.drawTeamLabel(targetSurf)
             pygame.display.flip()
             FPSCLOCK.tick(FPS)
@@ -649,12 +640,10 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
             checkForQuit()
 
             offset =  (jumpHeight * (bounceTween(fallStep/100))) - jumpHeight
-            targetSurf.fill(BKGCOLOR)
-            copySurf = targetSurf.copy()
+            targetSurf.blit(bkgImg, (0,0))
             pokeBallRect.centery = jumpStartY + offset
-            copySurf.blit(pokeBallImg, pokeBallRect)
+            targetSurf.blit(pokeBallImg, pokeBallRect)
 
-            targetSurf.blit(copySurf, (0, 0))
             currentTeam.drawTeamLabel(targetSurf)
             pygame.display.flip()
             FPSCLOCK.tick(FPS)
@@ -679,13 +668,10 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
                     animFrameRect.centerx = pokeBallRect.centerx
                     animFrameRect.centery = pokeBallRect.centery
 
-                    targetSurf.fill(BKGCOLOR)
-                    copySurf = targetSurf.copy()
-                    copySurf.blit(bonusPokemon.surface, bonusPokemon.rect)
-                    copySurf.blit(animFrameSurf, animFrameRect)
+                    targetSurf.blit(bkgImg, (0,0))
+                    targetSurf.blit(bonusPokemon.surface, bonusPokemon.rect)
+                    targetSurf.blit(animFrameSurf, animFrameRect)
 
-
-                    targetSurf.blit(copySurf, (0, 0))
                     currentTeam.drawTeamLabel(targetSurf)
 
                     pygame.display.flip()
@@ -697,10 +683,9 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
 
         for waitStep in range(1, 20):
             checkForQuit()
-            copySurf.fill(BKGCOLOR)
+            targetSurf.blit(bkgImg, (0,0))
             currentTeam.drawTeamLabel(targetSurf)
-            copySurf.blit(bonusPokemon.surface, bonusPokemon.rect)    
-            targetSurf.blit(copySurf, (0, 0))
+            targetSurf.blit(bonusPokemon.surface, bonusPokemon.rect)    
             pygame.display.flip()
             FPSCLOCK.tick(FPS)
         
@@ -898,13 +883,13 @@ def game():
     initObjects = [FPSCLOCK, DISPLAYSURF, roundPokemon] # Makes sending this into main, other screens flippin EASY tho.
 
     sessionTeams = [assets.TeamA(), assets.TeamB()]
-    random.shuffle(sessionTeams)
+    random.shuffle(sessionTeams)       
 
-
-    for team in sessionTeams:
-        scoreList = []
 
     teamTurn = 0
+    sessionTeams[0].addGreatPoint()
+    sessionTeams[0].addGreatPoint()
+    sessionTeams[0].addGreatPoint()
 
     books = [os.path.splitext(title)[0] for title in os.listdir(quizPath) if os.path.splitext(title)[1] in ('.xlsx', '.XLSX') and '~$' not in os.path.splitext(title)[0]]
     beginMusic(menuTrack)
@@ -912,7 +897,6 @@ def game():
     unitSelection = selectionMenu(initObjects, possibleUnits)
     subSetSelection = selectionMenu(initObjects, subSets)
     selectionList = [bookSelection, unitSelection, subSetSelection]
-    print(selectionList)
     beginMusic(track)
 
     winner = None
@@ -936,7 +920,7 @@ def game():
         bonusPokemon = roundPokemon
         while True:
             caught, bonusPlayer = bonusGame(sessionTeams, winner, initObjects, bonusPokemon)
-            if caught == 'yes' and bonusWinner:
+            if caught == 'yes' and bonusPlayer:
                 bonusSuccess(bonusPlayer, initObjects, bonusPokemon)
             elif caught == 'no':
                 assets.runAwaySound.play()

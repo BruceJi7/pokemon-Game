@@ -179,7 +179,6 @@ class bonusBall():
     def surface(self):
         image = self.dict[self.ballType][self.state]
         newSurf = pygame.Surface((40, 60), pygame.SRCALPHA)
-        newSurf.fill(BKGCOLOR)
         newSurf.blit(image, (0, 0))
         return newSurf
 
@@ -247,11 +246,10 @@ class pokeball():
         surfaceWidth = 180
         surfaceHeight = 90
         self.__surface = pygame.Surface((surfaceWidth, surfaceHeight), pygame.SRCALPHA)
-        # self.__surface.convert_alpha
         self.__surface.fill(CLEAR)
 
         if self.state == 'closed':
-            closedBall = self.path['closed']
+            closedBall = self.path['closed'].copy()
 
             closedBallRect = closedBall.get_rect()
             closedBallRect.center = (surfaceWidth/2, surfaceHeight/2)
@@ -403,6 +401,7 @@ class Team():
         scoreList = self.scoreList
         lastPoint = scoreList.pop()
         self.scoreList = scoreList
+        print(self.scoreList)
         return lastPoint
 
     
@@ -410,8 +409,11 @@ class Team():
     def drawTeamLabel(self, targetSurf):
         ballX = 0
         ballY = 0
+        self.teamSurf = pygame.Surface((154, 70), pygame.SRCALPHA)
         self.teamSurf.blit(self.barImg, (0, 0))
         self.pointSurf = pygame.Surface((108,18), pygame.SRCALPHA)
+        self.pointSurf.fill(WHITE)
+        self.pointSurf.fill((0,0,0,0))
         for ball in self.scoreList:
             if ball == "P":
                 ballImage = self.images['pokeScore']
