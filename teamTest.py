@@ -47,6 +47,21 @@ def checkForQuit():
         pygame.event.post(event)
 
 
+def catchMechanic(ballType):
+    catchChance = random.randint(0, 100)
+    if ballType == 'G':
+        catchChance *= 1.2
+    print(catchChance)
+    
+    if catchChance > 85:
+        return True, 3
+    
+    return False, random.randint(1, 3)
+
+    
+
+
+
 def throwAnimation(animationSpeed, targetSurf, teams, currentTeam):
     pokeBallImg = pygame.transform.scale(ast.pokeballImgs['closed'], (50,50))
     pokeBallRect = pokeBallImg.get_rect()
@@ -66,6 +81,9 @@ def throwAnimation(animationSpeed, targetSurf, teams, currentTeam):
         arcCentreY = 600
         reverseMode = 1
 
+    bonusPokemon.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/3)
+    
+
     # Throw Arc Animation part
     for rotationStep in range(0, totalRotation, animationSpeed):
         checkForQuit()        
@@ -77,13 +95,16 @@ def throwAnimation(animationSpeed, targetSurf, teams, currentTeam):
 
         location = ast.getTrigoForArc(startingLocation + offset, distFromRotationalCentre, arcCentreX, arcCentreY)
         pokeBallRect.center = location
+        copySurf.blit(bonusPokemon.surface, bonusPokemon.rect)
         copySurf.blit(pokeBallImg, pokeBallRect)
+        
 
 
             
         targetSurf.blit(copySurf, (0, 0))
         for team in teams:
             team.drawTeamLabel(targetSurf)
+
         pygame.display.flip()
         FPSCLOCK.tick(FPS)
     
@@ -174,6 +195,8 @@ pygame.mixer.music.load(ast.music['johtoTrainerBattle']['intro'])
 pygame.mixer.music.play()
 pygame.mixer.music.set_endevent(pygame.USEREVENT)
 
+bonusPokemon = ast.bonusPokemon(ast.getRandomPoke())
+
 
 
 
@@ -187,9 +210,21 @@ while True:
         pygame.mixer.music.load(ast.music['johtoTrainerBattle']['main'])
         pygame.mixer.music.set_volume(0.3)
         pygame.mixer.music.play()
+    
 
-    throwAnimation(6, DISPLAYSURF, teams, firstTeam)
 
+    # throwAnimation(6, DISPLAYSURF, teams, firstTeam)
+    catchMechanic('G')
+
+    catchMechanic('P')
+
+    break
+
+
+
+    
+
+    
     
 
 

@@ -44,6 +44,12 @@ pokeballImgs = {
     'closed' : pygame.image.load(os.path.join(pokeBallPath, 'pokeballClosed.png')),
 }
 
+bkgPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\backgrounds'
+
+backgrounds = {
+    'grass' : pygame.image.load(os.path.join(bkgPath, 'grass.png')),
+}
+
 
 
 teamImagesPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\team'
@@ -290,8 +296,8 @@ class alakazamChar():
     
     @property
     def surface(self):
-        self.__surface = pygame.Surface((160, 160))
-        self.__surface.fill(BKGCOLOR)
+        self.__surface = pygame.Surface((160, 160), pygame.SRCALPHA)
+        # self.__surface.fill(BKGCOLOR)
         image = self.path[self.state]
         imgRect = image.get_rect()
         imgRect.center = (80, 80)
@@ -405,7 +411,7 @@ class Team():
         ballX = 0
         ballY = 0
         self.teamSurf.blit(self.barImg, (0, 0))
-        self.pointSurf.fill(BKGCOLOR)
+        # self.pointSurf.fill(BKGCOLOR)
         for ball in self.scoreList:
             if ball == "P":
                 ballImage = self.images['pokeScore']

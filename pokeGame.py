@@ -32,14 +32,14 @@ flashOffset = 270
 locationAngles = [0, 60, 120, 180, 240, 300]
 
 quizPath = r'C:\Come On Python Games\resources\pokeBallGame\quiz'
-possibleUnits = ['U1', 'U2', 'U3']
+possibleUnits = ['U1', 'U2', 'U3', 'U4']
 subSets = ['1', '2']
 tracks = ['johtoTrainerBattle', 'gymBattle', 'darkCave']
 track = random.choice(tracks)
 menuTrack = 'menu'
 teamTurn = 0
 
-
+bkgImg = assets.backgrounds['grass']
 
 locations = [
     assets.getTrigoFromCenter(0, ballOffset, WINDOWWIDTH, WINDOWHEIGHT),
@@ -67,6 +67,7 @@ def main(teams, initObjects, teamTurn, selectionList):
 
     FPSCLOCK = initObjects[0]
     DISPLAYSURF = initObjects[1]
+    enemyPoke = initObjects[2]
 
     book = selectionList[0]
     unit = selectionList[1]
@@ -86,13 +87,14 @@ def main(teams, initObjects, teamTurn, selectionList):
     alakazam = assets.alakazam
     alakazam.state = 'normal'
 
-    alakazamImg = assets.alakazam.surface
-    alakazamRect = assets.alakazam.rect
-    alakazamRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
+    # alakazamImg = assets.alakazam.surface
+    # alakazamRect = assets.alakazam.rect
+    # alakazamRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
+    enemyPoke.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2 + 20)
 
     rotations = random.randint(2, 4)
 
-    spinAnimation(pokeBalls, locationAngles, animationSpeed, DISPLAYSURF, teams, rotations)
+    spinAnimation(pokeBalls, locationAngles, animationSpeed, enemyPoke, DISPLAYSURF, teams, rotations)
     
     lastGuess = None
     winState = None
@@ -105,6 +107,7 @@ def main(teams, initObjects, teamTurn, selectionList):
     while True:
 
         DISPLAYSURF.fill(BKGCOLOR)
+        DISPLAYSURF.blit(bkgImg, (0, 0))
         if teamTurn > 1:
             teamTurn = 0
 
@@ -173,7 +176,7 @@ def main(teams, initObjects, teamTurn, selectionList):
             team.drawTeamLabel(DISPLAYSURF)
         
 
-        DISPLAYSURF.blit(alakazamImg, alakazamRect)
+        DISPLAYSURF.blit(enemyPoke.surface, enemyPoke.rect)
         drawFlashcards(sessionFlashcards, flashLocations, DISPLAYSURF)
         drawPokeBallDefaultLocations(pokeBalls, locationAngles, DISPLAYSURF)
         
@@ -225,10 +228,12 @@ def drawPokeBallDefaultLocations(pokeballs, locations, targetSurf):
         current.rect.center = assets.getTrigoFromCenter(locations[n], ballOffset, WINDOWWIDTH, WINDOWHEIGHT)
         targetSurf.blit(current.surface, current.rect)
 
-def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, teams, rotateTimes=4):
+def spinAnimation(pokeballs, locations, animationSpeed, enemyPokemon, targetSurf, teams, rotateTimes=4):
     
     assets.ballSound.play()
     totalRotation = 360 * rotateTimes
+
+    enemyPokemon.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2 + 20)
     
     
 
@@ -236,8 +241,10 @@ def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, teams, rotat
         checkForQuit()
         musicRepeat(track)        
         offset = pokeBallTween(rotationStep / totalRotation) * 360
-        targetSurf.fill(BKGCOLOR)
+        targetSurf.blit(bkgImg, (0, 0))
         copySurf = targetSurf.copy()
+
+        
         
         for n in range(len(pokeballs)):
             location = assets.getTrigoFromCenter((locations[n]+offset), ballOffset, WINDOWWIDTH, WINDOWHEIGHT)
@@ -247,8 +254,10 @@ def spinAnimation(pokeballs, locations, animationSpeed, targetSurf, teams, rotat
 
             
         targetSurf.blit(copySurf, (0, 0))
+        
         for team in teams:
             team.drawTeamLabel(targetSurf)
+        targetSurf.blit(enemyPokemon.surface, enemyPokemon.rect)
         pygame.display.flip()
         FPSCLOCK.tick(FPS)
            
@@ -483,9 +492,9 @@ def selectionMenu(initObjects, menuList):
         
 
         if selection < 0:
-            selection = 0
-        elif selection > len(menuLabels)-1:
             selection = len(menuLabels)-1
+        elif selection > len(menuLabels)-1:
+            selection = 0
         
         selectionY = (menuTopBorder + menuSpacing * selection + 5)
         selectionRect.topleft = (selectionX, selectionY)
@@ -903,7 +912,10 @@ def game():
     DISPLAYSURF.fill(BKGCOLOR)
     pygame.display.set_caption('The PokeBall Game')
 
-    initObjects = [FPSCLOCK, DISPLAYSURF] # Makes sending this into main, other screens flippin EASY tho.
+    roundPokemon = assets.bonusPokemon(assets.getRandomPoke())
+
+
+    initObjects = [FPSCLOCK, DISPLAYSURF, roundPokemon] # Makes sending this into main, other screens flippin EASY tho.
 
     sessionTeams = [assets.TeamA(), assets.TeamB()]
     random.shuffle(sessionTeams)
@@ -938,8 +950,9 @@ def game():
     # Bonus Game Section - currently normal Game Over doesn't return into this
     for team in sessionTeams:
         if 'G' in team.scoreList:
-            bonusPokemon = assets.bonusPokemon(assets.getRandomPoke())
-            caught, bonusWinner = bonusGame(sessionTeams, teamTurn+1, initObjects, bonusPokemon)
+            bonusPokemon = roundPokemon
+            teamTurn += 1
+            caught, bonusWinner = bonusGame(sessionTeams, teamTurn, initObjects, bonusPokemon)
             if caught and bonusWinner:
                 bonusSuccess(bonusWinner, initObjects, bonusPokemon)
             else:
