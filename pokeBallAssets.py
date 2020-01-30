@@ -411,7 +411,7 @@ class Team():
         ballX = 0
         ballY = 0
         self.teamSurf.blit(self.barImg, (0, 0))
-        # self.pointSurf.fill(BKGCOLOR)
+        self.pointSurf = pygame.Surface((108,18), pygame.SRCALPHA)
         for ball in self.scoreList:
             if ball == "P":
                 ballImage = self.images['pokeScore']
