@@ -24,15 +24,15 @@ dropTween = tween.easeInSine
 wobbleTween = tween.easeInCirc
 bounceTween = tween.easeOutBounce
 pokeBallTween = tween.easeInOutSine
-throwAnimationSpeed = 5
+throwAnimationSpeed = 7
 animationSpeed = 10
-ballOffset = 140
+ballOffset = 160
 flashOffset = 280
 
 locationAngles = [0, 60, 120, 180, 240, 300]
 
 quizPath = r'C:\Come On Python Games\resources\pokeBallGame\quiz'
-possibleUnits = ['U1', 'U2', 'U3', 'U4']
+possibleUnits = ['U1', 'U2', 'U3', 'U4', 'U5', 'U6']
 subSets = ['1', '2']
 tracks = ['johtoTrainerBattle', 'gymBattle', 'darkCave']
 track = random.choice(tracks)
@@ -92,7 +92,7 @@ def main(teams, initObjects, teamTurn, selectionList):
     # alakazamRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
     enemyPoke.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2 + 20)
 
-    rotations = random.randint(2, 4)
+    rotations = random.randint(3, 5)
 
     spinAnimation(pokeBalls, locationAngles, animationSpeed, enemyPoke, DISPLAYSURF, teams, rotations)
     
@@ -155,17 +155,25 @@ def main(teams, initObjects, teamTurn, selectionList):
                 
                 
                 
-                if tries < 3:
+                if tries == 1:
+                    currentTeam.addUltraPoint()
+                    enemyPoke.HPValue -= 2
+                    assets.critHitSound.play()
+
+                
+                elif tries == 2 :
                     currentTeam.addGreatPoint()
+                    enemyPoke.HPValue -= 2
                     assets.critHitSound.play()
                 else:
                     currentTeam.addPoint()
+                    enemyPoke.HPValue -= 1
                     assets.hitSound.play()
+
             teamTurn += 1
             
 
         if tries > 4 and winState != 'Win': # On the 5th try, if no-one won, alakazam laughs.
-            alakazam.state = 'laugh'
             winState = 'Fail'
             assets.nopeSound.play()
             
@@ -185,6 +193,8 @@ def main(teams, initObjects, teamTurn, selectionList):
         
         DISPLAYSURF.blit(questionSurf, questionRect)
 
+        enemyPoke.drawHP(DISPLAYSURF)
+
         
    
 
@@ -194,7 +204,7 @@ def main(teams, initObjects, teamTurn, selectionList):
 
         if winState:
             pygame.time.wait(1000)
-            return teams, teamTurn
+            return teams, teamTurn, enemyPoke
         
 
 
@@ -235,7 +245,7 @@ def spinAnimation(pokeballs, locations, animationSpeed, enemyPokemon, targetSurf
     assets.ballSound.play()
     totalRotation = 360 * rotateTimes
 
-    enemyPokemon.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2 + 20)
+    enemyPokemon.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
     
     
 
@@ -244,13 +254,16 @@ def spinAnimation(pokeballs, locations, animationSpeed, enemyPokemon, targetSurf
         musicRepeat(track)        
         offset = pokeBallTween(rotationStep / totalRotation) * 360
         targetSurf.blit(bkgImg, (0, 0))
+        targetSurf.blit(enemyPokemon.surface, enemyPokemon.rect) 
+        enemyPokemon.drawHP(targetSurf)
+
         
         for n in range(len(pokeballs)):
             location = assets.getTrigoFromCenter((locations[n]+offset), ballOffset, WINDOWWIDTH, WINDOWHEIGHT)
             pokeballs[n].rect.center = location
             targetSurf.blit(pokeballs[n].surface, pokeballs[n].rect)
 
-        targetSurf.blit(enemyPokemon.surface, enemyPokemon.rect)    
+           
   
         for team in teams:
             team.drawTeamLabel(targetSurf)
@@ -703,12 +716,13 @@ def catchWildPokemon(animationSpeed, targetSurf, teams, currentTeam, bonusPokemo
 
 
 def rollToCatch(ballType):
-    firstChance = random.randint(0, 100)
-    if ballType == 'P':
-        return firstChance
+    if ballType == 'U':
+        return random.randint(0, 130)
+    elif ballType == 'G':
+        return random.randint(0, 115)
     else:
-        secondChance = random.randint(0, 95)
-        return max([firstChance, secondChance])
+        return random.randint(0, 100)
+    
 
 
 
@@ -887,9 +901,6 @@ def game():
 
 
     teamTurn = 0
-    sessionTeams[0].addGreatPoint()
-    sessionTeams[0].addGreatPoint()
-    sessionTeams[0].addGreatPoint()
 
     books = [os.path.splitext(title)[0] for title in os.listdir(quizPath) if os.path.splitext(title)[1] in ('.xlsx', '.XLSX') and '~$' not in os.path.splitext(title)[0]]
     beginMusic(menuTrack)
@@ -903,30 +914,31 @@ def game():
       
     while True: # This loop locks the game into repeating rounds
         
-        sessionTeams, teamTurn = main(sessionTeams, initObjects, teamTurn, selectionList)
-        for team in sessionTeams: # Check to see if someone has won 6 rounds
-            if team.hasWon:
-                winner = team
+        sessionTeams, teamTurn, pokemon = main(sessionTeams, initObjects, teamTurn, selectionList)
+        if pokemon.HPValue <= 0:
+            if sessionTeams[0].score > sessionTeams[1].score:
+                winner = sessionTeams[0]
+            elif sessionTeams[1].score > sessionTeams[0].score:
+                winner = sessionTeams[1]
+            else:
+                winner = random.choice(sessionTeams)
         if winner:
             break
 
+    
     gameOver(winner, initObjects) # Show the main Game Over Screen
 
-    bonusRound = False
-    for team in sessionTeams:
-        if 'G' or 'U' in team.scoreList:
-            bonusRound = True
-    if bonusRound:
-        bonusPokemon = roundPokemon
-        while True:
-            caught, bonusPlayer = bonusGame(sessionTeams, winner, initObjects, bonusPokemon)
-            if caught == 'yes' and bonusPlayer:
-                bonusSuccess(bonusPlayer, initObjects, bonusPokemon)
-            elif caught == 'no':
-                assets.runAwaySound.play()
-                bonusFail(initObjects)
-            winner = bonusPlayer
-              
+
+    bonusPokemon = roundPokemon
+    while True:
+        caught, bonusPlayer = bonusGame(sessionTeams, winner, initObjects, bonusPokemon)
+        if caught == 'yes' and bonusPlayer:
+            bonusSuccess(bonusPlayer, initObjects, bonusPokemon)
+        elif caught == 'no':
+            assets.runAwaySound.play()
+            bonusFail(initObjects)
+        winner = bonusPlayer
+            
 
        
 

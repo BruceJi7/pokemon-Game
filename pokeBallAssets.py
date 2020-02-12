@@ -10,6 +10,7 @@ WHITE           =(255, 255, 255)
 BLACK           =(  0,   0,   0)
 GREEN           =(  0, 200,   0)
 RED             =(255,   0,   0)
+YELLOW          =(230, 240,  20)
 CLEAR           =(  0,   0,   0,  0)
 
 
@@ -65,6 +66,7 @@ teamImgs = {
     },
     'pokeScore': pygame.image.load(os.path.join(teamImagesPath, 'scorePokeBall.png')),
     'greatScore': pygame.image.load(os.path.join(teamImagesPath, 'scoreGreatBall.png')),
+    'ultraScore': pygame.image.load(os.path.join(teamImagesPath, 'scoreUltraBall.png')),
 }
 
 
@@ -125,6 +127,9 @@ music = {
 }
 
 bonusPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\pokes'
+hpBarImg = pygame.image.load(r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\hpBar.png')
+
+
 bonusPokemonImages = {
     'bulbasaur' : [os.path.join(bonusPath, 'bulbasaur.png'), 20],
     'squirtle' : [os.path.join(bonusPath, 'squirtle.png'), 20],
@@ -148,6 +153,10 @@ bonusBallImages = {
     'G': {
         'closed': pygame.image.load(os.path.join(bonusBallPath, 'bonusGreatClosed.png')),
         'open': pygame.image.load(os.path.join(bonusBallPath, 'bonusGreatOpen.png')),
+    },
+    'U': {
+        'closed': pygame.image.load(os.path.join(bonusBallPath, 'bonusUltraClosed.png')),
+        'open': pygame.image.load(os.path.join(bonusBallPath, 'bonusUltraOpen.png')),
     },
 }
 bonusCatchPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\catchAnim'
@@ -200,16 +209,58 @@ def getRandomPoke(imageDict=bonusPokemonImages):
 
 
 class bonusPokemon():
-    def __init__(self, pokeImagePath):
+    def __init__(self, pokeImagePath, HPStat=9):
         self.path = pokeImagePath
         self.rect = self.makeRect()
+        self.__HPValue = HPStat
 
     @property
     def surface(self):
         return pygame.image.load(self.path)
 
+    @property
+    def HPValue(self):
+        return self.__HPValue
+
+    @HPValue.setter
+    def HPValue(self, setValue):
+        if setValue >= 0:
+            self.__HPValue = setValue
+        else:
+            self.__HPValue = 0
+
     def makeRect(self):
-        return self.surface.get_rect()      
+        return self.surface.get_rect()
+
+    
+
+    def drawHP(self, targetSurf):
+        HPBarX = WINDOWWIDTH/2
+        HPBarY = WINDOWHEIGHT/2 +80
+        HPSurf = pygame.Surface((159, 15), pygame.SRCALPHA)
+        HPRect = HPSurf.get_rect()
+        HPRect.center = (HPBarX, HPBarY)
+        HPBarBkg = pygame.Surface((117, 5))
+        HPBarBkg.fill(WHITE)
+        HPSurf.blit(HPBarBkg, (39, 5))
+
+        if self.HPValue > 0:
+            HPBarFill = pygame.Surface((((120 / 9) * self.HPValue) , 9))
+            color = BLACK
+            if self.HPValue >= 8:
+                color = GREEN
+            elif self.HPValue < 8 and self.HPValue >= 3:
+                color = YELLOW
+            elif self.HPValue < 3:
+                color = RED
+            HPBarFill.fill(color)
+            HPSurf.blit(HPBarFill, (38, 5))
+
+        HPSurf.blit(hpBarImg, (0, 0))
+        
+        targetSurf.blit(HPSurf, HPRect)
+        
+
 
 
 class pokeball():
@@ -380,7 +431,13 @@ class Team():
     # State Setter/Getter
     @property
     def score(self):
-        return len(self.scoreList)
+        scoreVal = 0
+        for ball in self.scoreList:
+            if ball in ('G', 'U'):
+                scoreVal += 2
+            elif ball == 'P':
+                scoreVal += 1
+        return scoreVal
     
         
     @property
@@ -395,6 +452,9 @@ class Team():
 
     def addGreatPoint(self):
         self.scoreList.append('G')
+    
+    def addUltraPoint(self):
+        self.scoreList.append('U')
 
     @property
     def popPoint(self):
@@ -419,6 +479,8 @@ class Team():
                 ballImage = self.images['pokeScore']
             elif ball == "G":
                 ballImage = self.images['greatScore']
+            elif ball == "U":
+                ballImage = self.images['ultraScore']
                  # Calculate how many balls to show
             self.pointSurf.blit(ballImage, (ballX, ballY))
             ballX += 18
