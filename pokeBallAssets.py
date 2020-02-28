@@ -1,4 +1,4 @@
-import pygame, os, math, random
+import pygame, os, math, random, openpyxl
 
 
 WINDOWWIDTH = 1024
@@ -49,6 +49,12 @@ bkgPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\backgro
 
 backgrounds = {
     'grass' : pygame.image.load(os.path.join(bkgPath, 'grass.png')),
+    'cave' : pygame.image.load(os.path.join(bkgPath, 'cave.png')),
+    'dead' : pygame.image.load(os.path.join(bkgPath, 'dead.png')),
+    'ice' : pygame.image.load(os.path.join(bkgPath, 'ice.png')),
+    'legend' : pygame.image.load(os.path.join(bkgPath, 'legend.png')),
+    'sand' : pygame.image.load(os.path.join(bkgPath, 'sand.png')),
+    'water' : pygame.image.load(os.path.join(bkgPath, 'water.png')),
 }
 
 
@@ -92,25 +98,40 @@ hitSound = pygame.mixer.Sound(os.path.join(soundPath, 'hit.ogg'))
 musicPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\music'
 
 music = {
-    'johtoTrainerBattle' :
+    'grass' :
     {
-        'intro' : os.path.join(musicPath, 'TrainerBattleIntro.ogg'),
-        'main' : os.path.join(musicPath, 'TrainerBattleMain.ogg'),
+        'intro' : os.path.join(musicPath, 'grassIntro.ogg'),
+        'main' : os.path.join(musicPath, 'grassMain.ogg'),
     },
-    'gymBattle' :
+    'legend' :
+    {
+        'intro' : os.path.join(musicPath, 'ultimateIntro.ogg'),
+        'main' : os.path.join(musicPath, 'ultimateMain.ogg'),
+    },
+    'cave' :
+    {
+        'intro' : os.path.join(musicPath, 'caveIntro.ogg'),
+        'main' : os.path.join(musicPath, 'caveMain.ogg'),
+    },
+    'ice' :
+    {
+        'intro' : os.path.join(musicPath, 'caveIntro.ogg'),
+        'main' : os.path.join(musicPath, 'caveMain.ogg'),
+    },
+    'dead' :
+    {
+        'intro' : os.path.join(musicPath, 'ghostIntro.ogg'),
+        'main' : os.path.join(musicPath, 'ghostMain.ogg'),
+    },
+    'sand' :
     {
         'intro' : os.path.join(musicPath, 'gymIntro.ogg'),
-        'main' : os.path.join(musicPath, 'gymMain.ogg'),
+        'main' : os.path.join(musicPath, 'gymeMain.ogg'),
     },
-    'darkCave' :
+    'water' :
     {
-        'intro' : os.path.join(musicPath, 'darkIntro.ogg'),
-        'main' : os.path.join(musicPath, 'darkMain.ogg'),
-    },
-    'route' :
-    {
-        'intro' : os.path.join(musicPath, 'routeIntro.ogg'),
-        'main' : os.path.join(musicPath, 'routeMain.ogg'),
+        'intro' : os.path.join(musicPath, 'waterIntro.ogg'),
+        'main' : os.path.join(musicPath, 'waterMain.ogg'),
     },
     'menu' : {
         'intro' : os.path.join(musicPath, 'menuIntro.ogg'),
@@ -120,29 +141,24 @@ music = {
         'intro' : os.path.join(musicPath, 'mainVictoryIntro.ogg'),
         'main' : os.path.join(musicPath, 'mainVictoryMain.ogg'),
     },
+    'game' : {
+        'intro' : os.path.join(musicPath, 'gameCornerIntro.ogg'),
+        'main' : os.path.join(musicPath, 'gameCornerMain.ogg'),
+    },
     'bonus' : {
         'intro' : os.path.join(musicPath, 'bonusVictoryIntro.ogg'),
         'main' : os.path.join(musicPath, 'bonusVictoryMain.ogg'),
     }
 }
-
-bonusPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\pokes'
+# bonusPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\pokes'
+bonusPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\allPokes'
+pokemonDataSheet = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\pokemonDataSheet.xlsx'
 hpBarImg = pygame.image.load(r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\hpBar.png')
 
 
-bonusPokemonImages = {
-    'bulbasaur' : [os.path.join(bonusPath, 'bulbasaur.png'), 20],
-    'squirtle' : [os.path.join(bonusPath, 'squirtle.png'), 20],
-    'charmander' : [os.path.join(bonusPath, 'charmander.png'), 20],
-    'charizard' : [os.path.join(bonusPath, 'charizard.png'), 10],
-    'pikachu' : [os.path.join(bonusPath, 'pikachu.png'), 18],
-    'raichu' : [os.path.join(bonusPath, 'raichu.png'), 12],
-    'ekans' : [os.path.join(bonusPath, 'ekans.png'), 16],
-    'eevee' : [os.path.join(bonusPath, 'eevee.png'), 18],
-    'zapdos' : [os.path.join(bonusPath, 'zapdos.png'), 6],
-    'mewtwo' : [os.path.join(bonusPath, 'mewtwo.png'), 3],
-    'suicune' : [os.path.join(bonusPath, 'suicune.png'), 2],
-}
+
+bonusPokemonImages = [os.path.join(bonusPath, pokeImageFile) for pokeImageFile in os.listdir(bonusPath) if os.path.splitext(pokeImageFile)[1] in ('.png', '.PNG')]
+
 
 bonusBallPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\bonus\ball'
 bonusBallImages = {
@@ -200,12 +216,26 @@ bonusPokeBall = bonusBall()
 
 
 
-def getRandomPoke(imageDict=bonusPokemonImages):
-    pokemonChanceList = []
-    for value in imageDict.values():
-        for _ in range(value[1]):
-            pokemonChanceList.append(value[0])
-    return random.choice(pokemonChanceList)
+def getRandomPoke(pokemonList=pokemonDataSheet):
+    wb = openpyxl.load_workbook(pokemonDataSheet)
+
+    sheet = wb.active
+
+
+    randomPokeRow = random.randint(1, 384)
+
+    pokemonName = sheet.cell(column=1, row=randomPokeRow).value
+    print(pokemonName)
+    pokemonThemeScheme = sheet.cell(column=2, row=randomPokeRow).value
+
+    pokemonImagePath = os.path.join(bonusPath, f'{pokemonName}_sprite.png')
+
+    return pokemonImagePath, pokemonThemeScheme
+
+
+
+
+    return random.choice(imageList)
 
 
 class bonusPokemon():
@@ -216,7 +246,8 @@ class bonusPokemon():
 
     @property
     def surface(self):
-        return pygame.image.load(self.path)
+        image = pygame.image.load(self.path)
+        return image
 
     @property
     def HPValue(self):
@@ -574,5 +605,3 @@ def getTrigoForArc(deg, hypo, centreX, centreY):
     trigX, trigY = getTrigoXY(deg, hypo)
 
     return (trigX + centreX, trigY+centreY)
-
-
