@@ -554,8 +554,37 @@ class TeamB(Team):
         self.pointSpacing = 8
         
 
+class bookScheme():
+    def __init__(self, book, path=None):
+        self.book = book
+        self.__path = path
+    
+    @property
+    def path(self):
+        return os.path.join(r'C:\Come On Python Games\resources\pokeBallGame\quiz', f'{self.book}.xlsx')
 
+    def getPossibleUnits(self):
+        wb = openpyxl.load_workbook(self.path)
+        unitSheetsInBook = wb.get_sheet_names()
+        return unitSheetsInBook
 
+    def getPossibleSubsets(self, chosenUnit):
+        wb = openpyxl.load_workbook(self.path)
+        sheet = wb[chosenUnit]
+
+        subsetLabelRow = 1
+        subsetLabelStartingColumn = 2
+        listOfSubsets = []
+        collecting_results = True
+        while collecting_results:
+            cellContents = sheet.cell(subsetLabelRow, subsetLabelStartingColumn).value
+            if cellContents:
+                listOfSubsets.append(str(cellContents))
+                subsetLabelStartingColumn += 1
+            else:
+                break
+        return listOfSubsets
+        
 
 
 
@@ -598,3 +627,8 @@ def getTrigoForArc(deg, hypo, centreX, centreY):
     trigX, trigY = getTrigoXY(deg, hypo)
 
     return (trigX + centreX, trigY+centreY)
+
+chosenBook = 'EB2'
+sessionQuiz = bookScheme(chosenBook)
+print(sessionQuiz.getPossibleUnits())
+print(sessionQuiz.getPossibleSubsets('2'))

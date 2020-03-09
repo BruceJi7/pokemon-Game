@@ -902,7 +902,8 @@ def game():
 
     teamTurn = 0
 
-    books = [os.path.splitext(title)[0] for title in os.listdir(quizPath) if os.path.splitext(title)[1] in ('.xlsx', '.XLSX') and '~$' not in os.path.splitext(title)[0]]
+    # Books: It gives a choice of any excel files in the folder, but not the ~$ temp file, and skips 'example' files.
+    books = [os.path.splitext(title)[0] for title in os.listdir(quizPath) if os.path.splitext(title)[1] in ('.xlsx', '.XLSX') and '~$' not in os.path.splitext(title)[0] and os.path.splitext(title)[0] not in ('example', 'EXAMPLE')]
     beginMusic(menuTrack)
     bookSelection = selectionMenu(initObjects, books)
     unitSelection = selectionMenu(initObjects, possibleUnits)
