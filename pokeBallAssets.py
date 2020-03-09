@@ -24,7 +24,7 @@ POINTBALLPOSY = 0
 pygame.init()
 
 def pokeFont(size=20):
-    return pygame.font.SysFont('minecraft', size)
+    return pygame.font.SysFont('Minecraft', size)
 
 pokeBallFont = pokeFont(20)
 
@@ -126,7 +126,7 @@ music = {
     'sand' :
     {
         'intro' : os.path.join(musicPath, 'gymIntro.ogg'),
-        'main' : os.path.join(musicPath, 'gymeMain.ogg'),
+        'main' : os.path.join(musicPath, 'gymMain.ogg'),
     },
     'water' :
     {
@@ -553,13 +553,6 @@ class TeamB(Team):
         self.turnIndicatorX = (WINDOWWIDTH - 154 - 20) 
         self.pointSpacing = 8
         
-
-
-
-
-
-
-
 
 
 
