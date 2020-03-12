@@ -29,15 +29,6 @@ def pokeFont(size=20):
 pokeBallFont = pokeFont(20)
 
 
-alakaPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\alakazam'
-alakazamImg = {
-    'normal': pygame.image.load(os.path.join(alakaPath, 'alakazamNormal.png')),
-    'blink': pygame.image.load(os.path.join(alakaPath, 'alakazamBlink.png')),
-    'ouch': pygame.image.load(os.path.join(alakaPath, 'alakazamOuch.png')),
-    'laugh': pygame.image.load(os.path.join(alakaPath, 'alakazamLaugh.png')),
-}
-
-
 pokeBallPath = r'C:\Come On Python Games\resources\pokeBallGame\common\assets\pokeball'
 
 pokeballImgs = {
@@ -225,7 +216,7 @@ def getRandomPoke(pokemonList=pokemonDataSheet):
     randomPokeRow = random.randint(1, 384)
 
     pokemonName = sheet.cell(column=1, row=randomPokeRow).value
-    print(pokemonName)
+    print(f'You will battle {pokemonName}!')
     pokemonThemeScheme = sheet.cell(column=2, row=randomPokeRow).value
 
     pokemonImagePath = os.path.join(bonusPath, f'{pokemonName}_sprite.png')
@@ -356,38 +347,6 @@ class pokeball():
 
     def makeRect(self):
         return self.surface.get_rect()
-
-class alakazamChar():
-    def __init__(self, path, state='normal', surface=None):
-        self.path = path
-        self.__state = state
-        self.__surface = surface
-        self.rect = self.makeRect()
-
-    @property
-    def state(self):
-        return self.__state
-
-
-    @state.setter
-    def state(self, setState):
-        self.__state = setState
-
-    
-    @property
-    def surface(self):
-        self.__surface = pygame.Surface((160, 160), pygame.SRCALPHA)
-        # self.__surface.fill(BKGCOLOR)
-        image = self.path[self.state]
-        imgRect = image.get_rect()
-        imgRect.center = (80, 80)
-        self.__surface.blit(image, imgRect )
-        return self.__surface
-    
-    def makeRect(self):
-        return self.surface.get_rect()
-
-alakazam = alakazamChar(alakazamImg)
 
 class question():
     def __init__(self, question, answer):
@@ -558,35 +517,141 @@ class bookScheme():
     def __init__(self, book, path=None):
         self.book = book
         self.__path = path
+        self.__unit = None
+        self.__subset = None
+        self.__flashcardRange = None
+        self.__questionFormat = None
+        self.__questions = None
     
     @property
     def path(self):
         return os.path.join(r'C:\Come On Python Games\resources\pokeBallGame\quiz', f'{self.book}.xlsx')
+
+    @property
+    def unit(self):
+        return self.__unit
+
+    @unit.setter
+    def unit(self, valueToSetAsUnit):
+        self.__unit = valueToSetAsUnit
+    
+    @property
+    def subset(self):
+        return self.__subset
+    
+    @subset.setter
+    def subset(self, valueToSetAsSubset):
+        self.__subset = valueToSetAsSubset
+
+    @property
+    def flashcardRange(self):
+        return self.__flashcardRange
+    
+    @flashcardRange.setter
+    def flashcardRange(self, valueToSetAsFlashcardRange):
+        self.__flashcardRange = valueToSetAsFlashcardRange
+
+    @property
+    def questionFormat(self):
+        return self.__questionFormat
+    
+    @questionFormat.setter
+    def questionFormat(self, valueToSetAsQuestionFormat):
+        self.__questionFormat = valueToSetAsQuestionFormat
+
+    @property
+    def questions(self):
+        return self.__questions
+    
+    @questions.setter
+    def questions(self, valueToSetAsQuestions):
+        self.__questions = valueToSetAsQuestions
+    
+
+
 
     def getPossibleUnits(self):
         wb = openpyxl.load_workbook(self.path)
         unitSheetsInBook = wb.get_sheet_names()
         return unitSheetsInBook
 
-    def getPossibleSubsets(self, chosenUnit):
+    def getPossibleSubsets(self):
         wb = openpyxl.load_workbook(self.path)
-        sheet = wb[chosenUnit]
+        sheet = wb[self.unit]
 
         subsetLabelRow = 1
         subsetLabelStartingColumn = 2
         listOfSubsets = []
-        collecting_results = True
-        while collecting_results:
+        while True:
             cellContents = sheet.cell(subsetLabelRow, subsetLabelStartingColumn).value
             if cellContents:
-                listOfSubsets.append(str(cellContents))
+                listOfSubsets.append(str(int(cellContents)))
                 subsetLabelStartingColumn += 1
             else:
                 break
         return listOfSubsets
+
+    def getScheme(self):
+        wb = openpyxl.load_workbook(self.path)
+        sheet = wb[self.unit]
+
+        subsetColumnLocation = int(self.subset) + 1
+        flashcardRangeCell = sheet.cell(2, subsetColumnLocation).value
+        questionTypeCell = sheet.cell(3, subsetColumnLocation).value
+
+        if not flashcardRangeCell:
+            flashcardRangeCell = 'ALL'
+
+        self.flashcardRange = flashcardRangeCell
+        self.questionFormat = questionTypeCell
+
+        return flashcardRangeCell,  questionTypeCell
         
+    def getQuestions(self):
+        
+        self.getScheme()
 
+        if self.questionFormat == None:
+            return None
+        elif self.questionFormat in ('be', 'BE', 'Be'):
+            return [
+                'Is she...?',
+                'Is he...?',
+                'Are they...?',
+                'Are you...?',
+                'Is Tom...?',
+                'Is Ellie...?'
+            ]
+        elif self.questionFormat in ('do', 'DO', 'Do'):
+            return [
+                'Does she...?',
+                'Does he...?',
+                'Do they...?',
+                'Do you...?',
+                'Does Tom...?',
+                'Does Ellie...?'
+            ]
+        else:
+            wb = openpyxl.load_workbook(self.path)
+            sheet = wb[self.unit]
+            subsetColumnLocation = int(self.subset) + 1
+            questionRangeCell = 4
 
+            questionsLoadedFromExcelSheet = []
+            while True:
+                currentQuestionCellContents = sheet.cell(column=subsetColumnLocation, row=questionRangeCell).value
+                if currentQuestionCellContents:
+                    questionsLoadedFromExcelSheet.append(currentQuestionCellContents)
+                    questionRangeCell += 1
+                else:
+                    break
+            if len(questionsLoadedFromExcelSheet) < 1:
+                questionsLoadedFromExcelSheet.append('NO QUESTIONS LOADED')
+            
+            self.questions = questionsLoadedFromExcelSheet
+            return questionsLoadedFromExcelSheet
+            
+        
 
 
 # Trig Functions
@@ -628,7 +693,3 @@ def getTrigoForArc(deg, hypo, centreX, centreY):
 
     return (trigX + centreX, trigY+centreY)
 
-chosenBook = 'EB2'
-sessionQuiz = bookScheme(chosenBook)
-print(sessionQuiz.getPossibleUnits())
-print(sessionQuiz.getPossibleSubsets('2'))

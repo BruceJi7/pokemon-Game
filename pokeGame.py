@@ -61,7 +61,7 @@ flashLocations = [
 
 
 
-def main(teams, initObjects, teamTurn, selectionList):
+def main(teams, initObjects, teamTurn, quizObject):
     global FPSCLOCK 
     pygame.init()
 
@@ -70,17 +70,22 @@ def main(teams, initObjects, teamTurn, selectionList):
     enemyPoke = initObjects[2]
     roundTheme = initObjects[3]
 
-    book = selectionList[0]
-    unit = selectionList[1]
-    section = selectionList[2]
-
     firstTeam = teams[0]
     secondTeam = teams[1]
-    correctQAPair, sessionQAList, sessionFlashcards = excelGetGameScheme(book, unit, section)
 
-    ballMessages = [pair.answer for pair in sessionQAList]
+    sessionQuestions = quizObject.questions
+    random.shuffle(sessionQuestions)
+    sessionFlashcards = getFlashcards(quizObject)
+    
+    sessionChosenQuestion = random.choice(sessionQuestions)
 
-    questionSurf, questionRect = makeQuestionPanel(correctQAPair)
+    # correctQAPair, sessionQAList, sessionFlashcards = excelGetGameScheme(book, unit, section)
+
+    ballMessages = ['X' for _ in range(5)]
+    ballMessages.append('O')
+    random.shuffle(ballMessages)
+
+    questionSurf, questionRect = makeQuestionPanel(sessionChosenQuestion)
     
     pokeBalls = generatePokeballs(ballMessages)
 
@@ -141,7 +146,7 @@ def main(teams, initObjects, teamTurn, selectionList):
                         ball.state = 'open'    
 
         if lastGuess:
-            if lastGuess == correctQAPair.answer:
+            if lastGuess == 'O':
                 winState = 'Win'
                 
                 
@@ -194,7 +199,6 @@ def main(teams, initObjects, teamTurn, selectionList):
             pygame.time.wait(1000)
             return teams, teamTurn, enemyPoke
         
-
 
 def terminate():
     print('Terminating game...')
@@ -365,24 +369,32 @@ def closedQuestionType(bedo):
     return rightQAPair, AnswerList
 
 
-def makeQuestionPanel(questionObj):
+def makeQuestionPanel(question):
 
     questionFont = assets.pokeFont(30)
-    text = questionFont.render(questionObj.question, 1, MAINTEXTCOLOR)
+    text = questionFont.render(question, 1, MAINTEXTCOLOR)
     textRect = text.get_rect()
     textRect.center = (WINDOWWIDTH/2, 30)
 
     return (text, textRect)
 
-def getFlashcards(book, unit, flashRange=None):
+def getFlashcards(quizObject):
     basePath = r'C:\Come On Python Games\resources\pokeBallGame'
-    sessionPath = os.path.join(basePath, book, unit)
 
-    imagePaths = [os.path.join(sessionPath, image) for image in os.listdir(sessionPath) if os.path.splitext(image)[1] in ('.png', '.PNG')]
-    
-    if flashRange: # Flashrange is for when the parts of the unit don't work well together.
-        start = flashRange[0]
-        stop = flashRange[1]
+    sessionPath = os.path.join(basePath, quizObject.book, quizObject.unit)
+
+    try:
+        imagePaths = [os.path.join(sessionPath, image) for image in os.listdir(sessionPath) if os.path.splitext(image)[1] in ('.png', '.PNG', '.jpg', '.JPG', '.jpeg', '.JPEG')]
+    except:
+        print('ERROR: Failed to find the unit folder or flashcard files. Do the units in the excel file have the same name as the flashcard folders?')
+
+    sessionFlashcardRange = quizObject.flashcardRange   
+
+    if sessionFlashcardRange in (',', ';', ':'):
+        splitRangeIntoList = sessionFlashcardRange.split(',')
+        start = splitRangeIntoList[0]
+        stop = splitRangeIntoList[1]
+
         imagePaths = imagePaths[start:stop]
 
 
@@ -396,7 +408,7 @@ def getFlashcards(book, unit, flashRange=None):
 
     pyImages = [pygame.image.load(imgFile) for imgFile in sessionImgs]
 
-    
+    #TODO this is where the transform needs to be updated
     return [pygame.transform.scale(image, (200, 125))for image in pyImages]
 
 
@@ -410,26 +422,6 @@ def drawFlashcards(flashList, flashLocationList, targetSurf):
 
             targetSurf.blit(current, currentRect)
 
-def checkWin(lastGuess, questionPair, tries, alakazam, currentTeam, teamTurn):
-    win = None
-
-    if tries > 4:
-        win = 'Fail'
-        teamTurn += 1
-    if lastGuess == None:
-        pass
-    else:
-        if lastGuess == questionPair.answer:
-            win = 'Win'
-            if tries == 1:
-                currentTeam.addGreatPoint()
-            else:
-                currentTeam.addPoint()
-        else:
-            teamTurn += 1
-    if teamTurn > 1:
-        teamTurn = 0
-    return alakazam, win, currentTeam, teamTurn
 
 
 def musicRepeat(track):
@@ -447,6 +439,7 @@ def selectionMenu(initObjects, menuList):
     menuRect = menuSurf.get_rect()
     menuRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
 
+    # This menu function is reusable. Books, units, and subsets can all be passed in as menuList.
        
     menuLabels = [assets.pokeFont(30).render(label, 1, assets.MAINTEXTCOLOR) for label in menuList]
     menuRects = [label.get_rect() for label in menuLabels]
@@ -903,19 +896,31 @@ def game():
     teamTurn = 0
 
     # Books: It gives a choice of any excel files in the folder, but not the ~$ temp file, and skips 'example' files.
+
     books = [os.path.splitext(title)[0] for title in os.listdir(quizPath) if os.path.splitext(title)[1] in ('.xlsx', '.XLSX') and '~$' not in os.path.splitext(title)[0] and os.path.splitext(title)[0] not in ('example', 'EXAMPLE')]
     beginMusic(menuTrack)
-    bookSelection = selectionMenu(initObjects, books)
-    unitSelection = selectionMenu(initObjects, possibleUnits)
-    subSetSelection = selectionMenu(initObjects, subSets)
-    selectionList = [bookSelection, unitSelection, subSetSelection]
+    
+    chosenBook = selectionMenu(initObjects, books)
+    sessionQuiz = assets.bookScheme(chosenBook)
+    
+    possibleUnits = sessionQuiz.getPossibleUnits()
+    chosenUnit = selectionMenu(initObjects, possibleUnits)
+    sessionQuiz.unit = chosenUnit
+
+    subsets = sessionQuiz.getPossibleSubsets()
+    chosenSubset = selectionMenu(initObjects, subsets)
+    sessionQuiz.subset = chosenSubset
+
+    sessionQuiz.getQuestions()
+
+    # selectionList = [bookSelection, unitSelection, subSetSelection]
     beginMusic(pokemonTheme)
 
     winner = None
       
     while True: # This loop locks the game into repeating rounds
         
-        sessionTeams, teamTurn, pokemon = main(sessionTeams, initObjects, teamTurn, selectionList)
+        sessionTeams, teamTurn, pokemon = main(sessionTeams, initObjects, teamTurn, sessionQuiz)
         if pokemon.HPValue <= 0:
             if sessionTeams[0].score > sessionTeams[1].score:
                 winner = sessionTeams[0]
