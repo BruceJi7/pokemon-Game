@@ -519,6 +519,7 @@ class bookScheme():
         self.__path = path
         self.__unit = None
         self.__subset = None
+        self.__possibleSubsets = None
         self.__flashcardRange = None
         self.__questionFormat = None
         self.__questions = None
@@ -542,6 +543,14 @@ class bookScheme():
     @subset.setter
     def subset(self, valueToSetAsSubset):
         self.__subset = valueToSetAsSubset
+
+    @property
+    def possibleSubsets(self):
+        return self.__possibleSubsets
+    
+    @possibleSubsets.setter
+    def possibleSubsets(self, valueToSetAsPossibleSubsets):
+        self.__possibleSubsets = valueToSetAsPossibleSubsets
 
     @property
     def flashcardRange(self):
@@ -585,17 +594,20 @@ class bookScheme():
         while True:
             cellContents = sheet.cell(subsetLabelRow, subsetLabelStartingColumn).value
             if cellContents:
-                listOfSubsets.append(str(int(cellContents)))
+                listOfSubsets.append(str(cellContents))
                 subsetLabelStartingColumn += 1
             else:
                 break
+        self.possibleSubsets = listOfSubsets
+        print(listOfSubsets)
         return listOfSubsets
 
     def getScheme(self):
         wb = openpyxl.load_workbook(self.path)
         sheet = wb[self.unit]
 
-        subsetColumnLocation = int(self.subset) + 1
+        subsetColumnLocation = int(self.subset)
+        print(f'Subset location: {subsetColumnLocation}')
         flashcardRangeCell = sheet.cell(2, subsetColumnLocation).value
         questionTypeCell = sheet.cell(3, subsetColumnLocation).value
 
@@ -610,11 +622,11 @@ class bookScheme():
     def getQuestions(self):
         
         self.getScheme()
-
+        print(self.questionFormat)
         if self.questionFormat == None:
             return None
         elif self.questionFormat in ('be', 'BE', 'Be'):
-            return [
+            self.questions = [
                 'Is she...?',
                 'Is he...?',
                 'Are they...?',
@@ -623,7 +635,7 @@ class bookScheme():
                 'Is Ellie...?'
             ]
         elif self.questionFormat in ('do', 'DO', 'Do'):
-            return [
+            self.questions = [
                 'Does she...?',
                 'Does he...?',
                 'Do they...?',
@@ -634,7 +646,7 @@ class bookScheme():
         else:
             wb = openpyxl.load_workbook(self.path)
             sheet = wb[self.unit]
-            subsetColumnLocation = int(self.subset) + 1
+            subsetColumnLocation = int(self.subset)
             questionRangeCell = 4
 
             questionsLoadedFromExcelSheet = []
@@ -649,7 +661,8 @@ class bookScheme():
                 questionsLoadedFromExcelSheet.append('NO QUESTIONS LOADED')
             
             self.questions = questionsLoadedFromExcelSheet
-            return questionsLoadedFromExcelSheet
+        print(self.questions)
+        return self.questions
             
         
 

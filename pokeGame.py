@@ -388,14 +388,26 @@ def getFlashcards(quizObject):
     except:
         print('ERROR: Failed to find the unit folder or flashcard files. Do the units in the excel file have the same name as the flashcard folders?')
 
-    sessionFlashcardRange = quizObject.flashcardRange   
+    sessionFlashcardRange = quizObject.flashcardRange  
+    print(sessionFlashcardRange) 
 
-    if sessionFlashcardRange in (',', ';', ':'):
+    flashcardRangeTriggers = (',', ';', ':')
+    needToSplit = False
+    for trigger in flashcardRangeTriggers:
+        if trigger in sessionFlashcardRange:
+            needToSplit = True
+            break
+    if needToSplit:
+        print('Playing with selection of flashcards')
         splitRangeIntoList = sessionFlashcardRange.split(',')
-        start = splitRangeIntoList[0]
-        stop = splitRangeIntoList[1]
+        start = int(splitRangeIntoList[0])
+        stop = int(splitRangeIntoList[1])
 
         imagePaths = imagePaths[start:stop]
+        
+    else:
+        print(f'Playing with all flashcards')
+    
 
 
 
@@ -409,7 +421,27 @@ def getFlashcards(quizObject):
     pyImages = [pygame.image.load(imgFile) for imgFile in sessionImgs]
 
     #TODO this is where the transform needs to be updated
-    return [pygame.transform.scale(image, (200, 125))for image in pyImages]
+    return [doImageTransform(image) for image in pyImages]
+
+def doImageTransform(image):
+    targetWidth = 250
+    targetHeight = 175
+
+    size = image.get_rect().size
+    width, height = size
+
+    if width > height:
+        dividingRatio = width / targetWidth
+        targetHeight = int(height // dividingRatio)
+    elif width < height:
+        dividingRatio = height / targetHeight
+        targetWidth = int(width // dividingRatio)
+    
+    elif width == height:
+        targetWidth == 200
+        targetHeight == 200
+
+    return pygame.transform.scale(image, (targetWidth, targetHeight))
 
 
 def drawFlashcards(flashList, flashLocationList, targetSurf):
@@ -909,7 +941,8 @@ def game():
 
     subsets = sessionQuiz.getPossibleSubsets()
     chosenSubset = selectionMenu(initObjects, subsets)
-    sessionQuiz.subset = chosenSubset
+    subsetIndex = sessionQuiz.possibleSubsets.index(chosenSubset) + 2 # Plus 2 because also excel uses indexing starting from 0 :|
+    sessionQuiz.subset = subsetIndex
 
     sessionQuiz.getQuestions()
 
