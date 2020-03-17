@@ -4,6 +4,10 @@ import pokeBallAssets as assets
 import pytweening as tween
 
 
+#Setting windowwidth and windowheight variables as global.
+#The risk is that I won't be able to tell where they are being changed.
+#The benefit is not needing to pass in and return these variables.
+global WINDOWWIDTH, WINDOWHEIGHT
 
 FPS = 30
 # To change 
@@ -42,27 +46,19 @@ teamTurn = 0
 # bkgImg = assets.backgrounds['grass']
 
 locations = [
-    assets.getTrigoFromCenter(0, ballOffset, WINDOWWIDTH, WINDOWHEIGHT),
-    assets.getTrigoFromCenter(60, ballOffset, WINDOWWIDTH, WINDOWHEIGHT),
-    assets.getTrigoFromCenter(120, ballOffset, WINDOWWIDTH, WINDOWHEIGHT),
-    assets.getTrigoFromCenter(180, ballOffset, WINDOWWIDTH, WINDOWHEIGHT),
-    assets.getTrigoFromCenter(240, ballOffset, WINDOWWIDTH, WINDOWHEIGHT),
-    assets.getTrigoFromCenter(300, ballOffset, WINDOWWIDTH, WINDOWHEIGHT)
+    assets.getTrigoFromCenter(0, ballOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2),
+    assets.getTrigoFromCenter(60, ballOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2),
+    assets.getTrigoFromCenter(120, ballOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2),
+    assets.getTrigoFromCenter(180, ballOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2),
+    assets.getTrigoFromCenter(240, ballOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2),
+    assets.getTrigoFromCenter(300, ballOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2)
     ]
 
-flashLocations = [
-    assets.getTrigoFromCenter(0, flashOffset, WINDOWWIDTH, WINDOWHEIGHT),
-    assets.getTrigoFromCenter(60, flashOffset, WINDOWWIDTH, WINDOWHEIGHT),
-    assets.getTrigoFromCenter(120, flashOffset, WINDOWWIDTH, WINDOWHEIGHT),
-    assets.getTrigoFromCenter(180, flashOffset, WINDOWWIDTH, WINDOWHEIGHT),
-    assets.getTrigoFromCenter(240, flashOffset, WINDOWWIDTH, WINDOWHEIGHT),
-    assets.getTrigoFromCenter(300, flashOffset, WINDOWWIDTH, WINDOWHEIGHT)
-]
 
 
 
 def main(teams, initObjects, teamTurn, quizObject):
-    global FPSCLOCK 
+    global FPSCLOCK, WINDOWWIDTH, WINDOWHEIGHT
     pygame.init()
 
     FPSCLOCK = initObjects[0]
@@ -96,6 +92,7 @@ def main(teams, initObjects, teamTurn, quizObject):
     rotations = random.randint(3, 5)
 
     spinAnimation(pokeBalls, locationAngles, animationSpeed, enemyPoke, DISPLAYSURF, teams, roundTheme, bkgImg, rotations)
+    questionRect.centerx = WINDOWWIDTH/2
     
     lastGuess = None
     winState = None
@@ -105,13 +102,13 @@ def main(teams, initObjects, teamTurn, quizObject):
 
     while True:
 
-        DISPLAYSURF.fill(BKGCOLOR)
-        DISPLAYSURF.blit(bkgImg, (0, 0))
+        DISPLAYSURF.fill(BLACK)
+        drawBackground(bkgImg, DISPLAYSURF)
         if teamTurn > 1:
             teamTurn = 0
 
         currentTeam = teams[teamTurn]
-        currentTeam.drawTurnIndicator(DISPLAYSURF)
+        currentTeam.drawTurnIndicator(DISPLAYSURF, WINDOWWIDTH)
         
     
         
@@ -127,9 +124,20 @@ def main(teams, initObjects, teamTurn, quizObject):
 
         musicRepeat(roundTheme)
 
+        newDim = None
         for event in pygame.event.get():
             if event.type == MOUSEBUTTONUP:
                 mouseClick = True
+            elif event.type == VIDEORESIZE:
+                newDim = event.size
+        
+        if newDim:
+            WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+            DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
+
+            enemyPoke.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2 + 20)
+            questionRect.centerx = WINDOWWIDTH/2
+
             
 
         for ball in pokeBalls:
@@ -176,17 +184,17 @@ def main(teams, initObjects, teamTurn, quizObject):
 
         
         for team in teams:
-            team.drawTeamLabel(DISPLAYSURF)
+            team.drawTeamLabel(DISPLAYSURF, WINDOWWIDTH)
         
 
         DISPLAYSURF.blit(enemyPoke.surface, enemyPoke.rect)
-        drawFlashcards(sessionFlashcards, flashLocations, DISPLAYSURF)
+        drawFlashcards(sessionFlashcards, DISPLAYSURF)
         drawPokeBallDefaultLocations(pokeBalls, locationAngles, DISPLAYSURF)
         
         
         DISPLAYSURF.blit(questionSurf, questionRect)
 
-        enemyPoke.drawHP(DISPLAYSURF)
+        enemyPoke.drawHP(DISPLAYSURF, WINDOWWIDTH, WINDOWHEIGHT)
 
         
    
@@ -229,11 +237,11 @@ def generatePokeballs(messages):
 def drawPokeBallDefaultLocations(pokeballs, locations, targetSurf):
     for n in range(len(pokeballs)):
         current = pokeballs[n]
-        current.rect.center = assets.getTrigoFromCenter(locations[n], ballOffset, WINDOWWIDTH, WINDOWHEIGHT)
+        current.rect.center = assets.getTrigoFromCenter(locations[n], ballOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2)
         targetSurf.blit(current.surface, current.rect)
 
 def spinAnimation(pokeballs, locations, animationSpeed, enemyPokemon, targetSurf, teams, track, bkgImg, rotateTimes=4):
-    
+    global WINDOWWIDTH, WINDOWHEIGHT
     assets.ballSound.play()
     totalRotation = 360 * rotateTimes
 
@@ -243,22 +251,39 @@ def spinAnimation(pokeballs, locations, animationSpeed, enemyPokemon, targetSurf
 
     for rotationStep in range(0, totalRotation, animationSpeed):
         checkForQuit()
-        musicRepeat(track)        
-        offset = pokeBallTween(rotationStep / totalRotation) * 360
-        targetSurf.blit(bkgImg, (0, 0))
-        targetSurf.blit(enemyPokemon.surface, enemyPokemon.rect) 
-        enemyPokemon.drawHP(targetSurf)
+        musicRepeat(track)    
 
-        
+        newDim = None
+        for event in pygame.event.get():
+            if event.type == VIDEORESIZE:
+                newDim = event.size
+            elif event.type == KEYUP:
+                if event.key == K_ESCAPE:
+                    terminate()
+            elif event.type == QUIT:
+                terminate()
+
+        if newDim:
+            WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+            DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
+            enemyPokemon.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
+
+        offset = pokeBallTween(rotationStep / totalRotation) * 360
+        drawBackground(bkgImg, targetSurf)
+        targetSurf.blit(enemyPokemon.surface, enemyPokemon.rect) 
+        enemyPokemon.drawHP(targetSurf, WINDOWWIDTH, WINDOWHEIGHT)
+
+
+
         for n in range(len(pokeballs)):
-            location = assets.getTrigoFromCenter((locations[n]+offset), ballOffset, WINDOWWIDTH, WINDOWHEIGHT)
+            location = assets.getTrigoFromCenter((locations[n]+offset), ballOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2)
             pokeballs[n].rect.center = location
             targetSurf.blit(pokeballs[n].surface, pokeballs[n].rect)
 
            
   
         for team in teams:
-            team.drawTeamLabel(targetSurf)
+            team.drawTeamLabel(targetSurf, WINDOWWIDTH)
         
         pygame.display.flip()
         FPSCLOCK.tick(FPS)
@@ -371,6 +396,8 @@ def closedQuestionType(bedo):
 
 def makeQuestionPanel(question):
 
+    global WINDOWWIDTH
+
     questionFont = assets.pokeFont(30)
     text = questionFont.render(question, 1, MAINTEXTCOLOR)
     textRect = text.get_rect()
@@ -389,7 +416,6 @@ def getFlashcards(quizObject):
         print('ERROR: Failed to find the unit folder or flashcard files. Do the units in the excel file have the same name as the flashcard folders?')
 
     sessionFlashcardRange = quizObject.flashcardRange  
-    print(sessionFlashcardRange) 
 
     flashcardRangeTriggers = (',', ';', ':')
     needToSplit = False
@@ -400,7 +426,7 @@ def getFlashcards(quizObject):
     if needToSplit:
         print('Playing with selection of flashcards')
         splitRangeIntoList = sessionFlashcardRange.split(',')
-        start = int(splitRangeIntoList[0])
+        start = int(splitRangeIntoList[0])-1
         stop = int(splitRangeIntoList[1])
 
         imagePaths = imagePaths[start:stop]
@@ -444,7 +470,16 @@ def doImageTransform(image):
     return pygame.transform.scale(image, (targetWidth, targetHeight))
 
 
-def drawFlashcards(flashList, flashLocationList, targetSurf):
+def drawFlashcards(flashList, targetSurf):
+    global WINDOWWIDTH, WINDOWHEIGHT
+    flashLocationList = [
+    assets.getTrigoFromCenter(0, flashOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2),
+    assets.getTrigoFromCenter(60, flashOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2),
+    assets.getTrigoFromCenter(120, flashOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2),
+    assets.getTrigoFromCenter(180, flashOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2),
+    assets.getTrigoFromCenter(240, flashOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2),
+    assets.getTrigoFromCenter(300, flashOffset, WINDOWWIDTH/2, WINDOWHEIGHT/2)
+    ]
     for n in range(len(flashList)):
             
             current = flashList[n]
@@ -464,6 +499,8 @@ def musicRepeat(track):
         
 
 def selectionMenu(initObjects, menuList):
+    global WINDOWWIDTH, WINDOWHEIGHT
+
     FPSCLOCK = initObjects[0]
     DISPLAYSURF = initObjects[1]
 
@@ -477,17 +514,20 @@ def selectionMenu(initObjects, menuList):
     menuRects = [label.get_rect() for label in menuLabels]
 
     menuLeftBorder = WINDOWWIDTH/2 - 200
-    menuTopBorder = WINDOWHEIGHT/2 - 100
+    menuTopBorder = WINDOWHEIGHT/2 - 130
     menuSpacing = 35
 
     selectionIcon = assets.teamImgs['turnIndicator']['B']
     selectionRect = selectionIcon.get_rect()
-    selectionX = menuLeftBorder - 20
+    overflowBorder = 170
     selection = 0
+    selectionX = menuLeftBorder - 20 + overflowBorder * (selection // 8)
     
 
     for n in range(len(menuLabels)):
-        menuRects[n].topleft = (menuLeftBorder, (menuTopBorder + menuSpacing * n))
+        overflowAmount = n // 8
+        menuRects[n].topleft = (menuLeftBorder + (overflowBorder * overflowAmount), (menuTopBorder + menuSpacing * n) - (menuSpacing * 8) * overflowAmount)
+        
         
 
 
@@ -501,23 +541,47 @@ def selectionMenu(initObjects, menuList):
         for n in range(len(menuLabels)):
             DISPLAYSURF.blit(menuLabels[n], menuRects[n])
 
+        newDim = None
         for event in pygame.event.get():
             if event.type == KEYUP:
-                assets.selectSound.play()
+                if event.key in (K_UP, K_DOWN, K_RETURN, K_KP_ENTER, K_ESCAPE):
+                    assets.selectSound.play()
+
                 if event.key == K_UP:
                     selection -= 1
                 elif event.key == K_DOWN:
                     selection += 1
                 elif event.key in (K_RETURN, K_KP_ENTER):
                     return menuList[selection]
+                elif event.key == K_ESCAPE:
+                    terminate()
+            elif event.type == VIDEORESIZE:
+                newDim = event.size
         
+        if newDim:
+            WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+            DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
+            menuLeftBorder = WINDOWWIDTH/2 - 200
+            menuTopBorder = WINDOWHEIGHT/2 - 130
+            menuRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
+            selectionX = menuLeftBorder - 20 + overflowBorder * (selection // 8)
+            overflowBorder = 170
+    
+
+            for n in range(len(menuLabels)):
+                overflowAmount = n // 8
+                menuRects[n].topleft = (menuLeftBorder + (overflowBorder * overflowAmount), (menuTopBorder + menuSpacing * n) - (menuSpacing * 8) * overflowAmount)
+        
+       
 
         if selection < 0:
             selection = len(menuLabels)-1
         elif selection > len(menuLabels)-1:
             selection = 0
         
-        selectionY = (menuTopBorder + menuSpacing * selection + 5)
+
+        selectionX = menuLeftBorder - 20 + overflowBorder * (selection // 8)
+        selectionY = (menuTopBorder + menuSpacing * selection + 5) - (menuSpacing * 8) * (selection // 8)
         selectionRect.topleft = (selectionX, selectionY)
         DISPLAYSURF.blit(selectionIcon, selectionRect)
 
@@ -527,7 +591,20 @@ def selectionMenu(initObjects, menuList):
 
 
 def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bonusPokemon, lastScoredPoint, shakeHowManyTimes, caught):
-    
+
+    global WINDOWWIDTH, WINDOWHEIGHT    
+
+    musicRepeat('game')
+
+    newDim = None
+    for event in pygame.event.get():
+        if event.type == VIDEORESIZE:
+            newDim = event.size
+    if newDim:
+        
+        WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+        targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
+   
     pokeBall = assets.bonusPokeBall
 
     pokeBall.ballType = lastScoredPoint
@@ -544,27 +621,41 @@ def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bon
     bounceHeight = 100
 
     if currentTeam.name == 'A':
+        arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+        arcCentreY = (WINDOWHEIGHT-786)/2 + 600
         startingLocation = -100
-        arcCentreX = 550
-        arcCentreY = 600
         reverseMode = -1
     else:
-        startingLocation = 100
-        arcCentreX = WINDOWWIDTH - 550
-        arcCentreY = 600
+        arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+        arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+        startingLocation = +100
         reverseMode = 1
-
-    # bonusPokemon.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/3)
     
 
     # Throw Arc Animation part
     assets.throwSound.play()
     for rotationStep in range(0, totalRotation, animationSpeed):
         musicRepeat('game')
-        checkForQuit()        
+        checkForQuit()
+        newDim = None
+        for event in pygame.event.get():
+            if event.type == VIDEORESIZE:
+                newDim = event.size
+        if newDim:
+            WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+            targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0 )
+            if currentTeam.name == 'A':
+                arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+                arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+            else:
+                arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+                arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+            bonusPokemon.rect.centerx = (WINDOWWIDTH/2)
+            location = assets.getTrigoForArc(startingLocation + offset, distFromRotationalCentre, arcCentreX, arcCentreY)       
+        
         offset = (throwTween(rotationStep / totalRotation) * 80)
         offset *= reverseMode
-        targetSurf.blit(bkgImg, (0,0))
+        drawBackground(bkgImg, targetSurf)
         distFromRotationalCentre = 300
 
         location = assets.getTrigoForArc(startingLocation + offset, distFromRotationalCentre, arcCentreX, arcCentreY)
@@ -572,7 +663,7 @@ def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bon
         targetSurf.blit(bonusPokemon.surface, bonusPokemon.rect)
         targetSurf.blit(pokeBallImg, pokeBallRect)
 
-        currentTeam.drawTeamLabel(targetSurf)
+        currentTeam.drawTeamLabel(targetSurf, WINDOWWIDTH)
 
         pygame.display.flip()
         FPSCLOCK.tick(FPS)
@@ -589,6 +680,20 @@ def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bon
     for animFrame in assets.bonusBallCatch:
         for time in range (0, 10):
             checkForQuit()
+            newDim = None
+            for event in pygame.event.get():
+                if event.type == VIDEORESIZE:
+                    newDim = event.size
+            if newDim:
+                WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+                targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0 )    
+                if currentTeam.name == 'A':
+                    arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+                    arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+                else:
+                    arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+                    arcCentreY = (WINDOWHEIGHT-786)/2 + 600   
+                bonusPokemon.rect.centerx = (WINDOWWIDTH/2)   
             if time == 1:
                 musicRepeat('game')
                 animFrameSurf = animFrame
@@ -596,13 +701,13 @@ def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bon
                 animFrameRect.centerx = pokeBallRect.centerx
                 animFrameRect.centery = pokeBallRect.centery
 
-                targetSurf.blit(bkgImg, (0,0))
+                drawBackground(bkgImg, targetSurf)
                 
                 targetSurf.blit(bonusPokemon.surface, bonusPokemon.rect)
                 targetSurf.blit(pokeBallImg, pokeBallRect)
                 targetSurf.blit(animFrameSurf, animFrameRect)
 
-                currentTeam.drawTeamLabel(targetSurf)
+                currentTeam.drawTeamLabel(targetSurf, WINDOWWIDTH)
 
                 pygame.display.flip()
                 FPSCLOCK.tick(FPS)
@@ -620,15 +725,30 @@ def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bon
     soundPlayed = False
     for dropStep in range(1, 100, animationSpeed):
         checkForQuit()
+        newDim = None
+        for event in pygame.event.get():
+            if event.type == VIDEORESIZE:
+                newDim = event.size
+        if newDim:
+            WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+            targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0 )    
+            if currentTeam.name == 'A':
+                arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+                arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+            else:
+                arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+                arcCentreY = (WINDOWHEIGHT-786)/2 + 600  
+            bonusPokemon.rect.centerx = (WINDOWWIDTH/2)    
         musicRepeat('game')
         offset =  dropDistance * (bounceTween(dropStep/100))
 
-        targetSurf.blit(bkgImg, (0,0))
+        drawBackground(bkgImg, targetSurf)
         
         pokeBallRect.centery = startingCentery + offset
+        # print(pokeBallRect.centerx)
         targetSurf.blit(pokeBallImg, pokeBallRect)
 
-        currentTeam.drawTeamLabel(targetSurf)
+        currentTeam.drawTeamLabel(targetSurf, WINDOWWIDTH)
         if dropStep > 50 and soundPlayed == False:
             assets.ballBounceSound.play()
             soundPlayed = True
@@ -640,6 +760,20 @@ def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bon
     waitTime = random.randint(20, 30)
     for waitStep in range(1, waitTime):
         checkForQuit()
+        newDim = None
+        for event in pygame.event.get():
+            if event.type == VIDEORESIZE:
+                newDim = event.size
+        if newDim:
+            WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+            targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0 )
+            if currentTeam.name == 'A':
+                arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+                arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+            else:
+                arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+                arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+            bonusPokemon.rect.centerx = (WINDOWWIDTH/2)          
         pygame.display.flip()
         FPSCLOCK.tick(FPS)
 
@@ -653,33 +787,75 @@ def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bon
         for jumpStep in range(1, 100, animationSpeed*6):
 
             checkForQuit()
+            newDim = None
+            for event in pygame.event.get():
+                if event.type == VIDEORESIZE:
+                    newDim = event.size
+            if newDim:
+                WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+                targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0 )
+                if currentTeam.name == 'A':
+                    arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+                    arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+                else:
+                    arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+                    arcCentreY = (WINDOWHEIGHT-786)/2 + 600 
+                bonusPokemon.rect.centerx = (WINDOWWIDTH/2)         
             
             offset =  (jumpHeight * (wobbleTween(jumpStep/100)))
-            targetSurf.blit(bkgImg, (0,0))
+            drawBackground(bkgImg, targetSurf)
             
             pokeBallRect.centery = jumpStartY - offset
             targetSurf.blit(pokeBallImg, pokeBallRect)
-            currentTeam.drawTeamLabel(targetSurf)
+            currentTeam.drawTeamLabel(targetSurf, WINDOWWIDTH)
             pygame.display.flip()
             FPSCLOCK.tick(FPS)
         
         for fallStep in range(1, 100, animationSpeed):
 
             checkForQuit()
+            newDim = None
+            for event in pygame.event.get():
+                if event.type == VIDEORESIZE:
+                    newDim = event.size
+            if newDim:
+                WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+                targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0 )
+                if currentTeam.name == 'A':
+                    arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+                    arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+                else:
+                    arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+                    arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+                bonusPokemon.rect.centerx = (WINDOWWIDTH/2)          
             musicRepeat('game')
 
             offset =  (jumpHeight * (bounceTween(fallStep/100))) - jumpHeight
-            targetSurf.blit(bkgImg, (0,0))
+            drawBackground(bkgImg, targetSurf)
             pokeBallRect.centery = jumpStartY + offset
             targetSurf.blit(pokeBallImg, pokeBallRect)
 
-            currentTeam.drawTeamLabel(targetSurf)
+            currentTeam.drawTeamLabel(targetSurf, WINDOWWIDTH)
             pygame.display.flip()
             FPSCLOCK.tick(FPS)
         
         waitTime = random.randint(6, 20)
         for waitStep in range(1, waitTime):
             checkForQuit()
+            newDim = None
+            for event in pygame.event.get():
+                if event.type == VIDEORESIZE:
+                    newDim = event.size
+            if newDim:
+                WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+                targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0 )
+                if currentTeam.name == 'A':
+                    arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+                    arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+                else:
+                    arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+                    arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+                bonusPokemon.rect.centerx = (WINDOWWIDTH/2)          
             musicRepeat('game')
             pygame.display.flip()
             FPSCLOCK.tick(FPS)
@@ -693,17 +869,31 @@ def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bon
             for time in range (0, 10):
                 musicRepeat('game')
                 checkForQuit()
+                newDim = None
+                for event in pygame.event.get():
+                    if event.type == VIDEORESIZE:
+                        newDim = event.size
+                if newDim:
+                    WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+                    targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0 )
+                    if currentTeam.name == 'A':
+                        arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+                        arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+                    else:
+                        arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+                        arcCentreY = (WINDOWHEIGHT-786)/2 + 600  
+                    bonusPokemon.rect.centerx = (WINDOWWIDTH/2)        
                 if time == 1:
                     animFrameSurf = animFrame
                     animFrameRect = animFrame.get_rect()
                     animFrameRect.centerx = pokeBallRect.centerx
                     animFrameRect.centery = pokeBallRect.centery
 
-                    targetSurf.blit(bkgImg, (0,0))
+                    drawBackground(bkgImg, targetSurf)
                     targetSurf.blit(bonusPokemon.surface, bonusPokemon.rect)
                     targetSurf.blit(animFrameSurf, animFrameRect)
 
-                    currentTeam.drawTeamLabel(targetSurf)
+                    currentTeam.drawTeamLabel(targetSurf, WINDOWWIDTH)
 
                     pygame.display.flip()
                     FPSCLOCK.tick(FPS)
@@ -714,9 +904,23 @@ def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bon
 
         for waitStep in range(1, 20):
             checkForQuit()
+            newDim = None
+            for event in pygame.event.get():
+                if event.type == VIDEORESIZE:
+                    newDim = event.size
+            if newDim:
+                WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+                targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0 )
+                if currentTeam.name == 'A':
+                    arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+                    arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+                else:
+                    arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+                    arcCentreY = (WINDOWHEIGHT-786)/2 + 600  
+                bonusPokemon.rect.centerx = (WINDOWWIDTH/2)                    
             musicRepeat('game')
-            targetSurf.blit(bkgImg, (0,0))
-            currentTeam.drawTeamLabel(targetSurf)
+            drawBackground(bkgImg, targetSurf)
+            currentTeam.drawTeamLabel(targetSurf, WINDOWWIDTH)
             targetSurf.blit(bonusPokemon.surface, bonusPokemon.rect)    
             pygame.display.flip()
             FPSCLOCK.tick(FPS)
@@ -724,13 +928,30 @@ def catchWildPokemon(animationSpeed, targetSurf, bkgImg, teams, currentTeam, bon
         WAITING = True
         while WAITING:
             checkForQuit()
+
             musicRepeat('game')
+            newDim = None
             for event in pygame.event.get():
                 if event.type == KEYUP:
                     if event.key in (K_RETURN, K_KP_ENTER):
                         WAITING = False
+    
+                elif event.type == VIDEORESIZE:
+                    newDim = event.size
+
+                if newDim:
+                    WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+                    targetSurf = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0 )
+                    if currentTeam.name == 'A':
+                        arcCentreX = (WINDOWWIDTH-1024)/2 + 500
+                        arcCentreY = (WINDOWHEIGHT-786)/2 + 600
                     else:
-                        continue
+                        arcCentreX = (WINDOWWIDTH-1024)/2 + (1024 - 500)
+                        arcCentreY = (WINDOWHEIGHT-786)/2 + 600
+                    bonusPokemon.rect.centerx = (WINDOWWIDTH/2)          
+                else:
+                    continue
+                
             pygame.display.flip()
             FPSCLOCK.tick(FPS)
 
@@ -759,6 +980,7 @@ def catchMechanic(ballType):
 
 
 def bonusGame(teams, playingTeam, initObjects, bonusPokemon, theme):
+    global WINDOWWIDTH, WINDOWHEIGHT
     FPSCLOCK = initObjects[0]
     DISPLAYSURF = initObjects[1]
 
@@ -772,6 +994,14 @@ def bonusGame(teams, playingTeam, initObjects, bonusPokemon, theme):
 
         DISPLAYSURF.fill(BKGCOLOR)
         musicRepeat('game')
+
+        newDim = None
+        for event in pygame.event.get():
+            if event.type == VIDEORESIZE:
+                newDim = event.size
+        if newDim:
+            WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+            DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
 
 
         
@@ -798,6 +1028,7 @@ def beginMusic(track):
     pygame.mixer.music.set_endevent(pygame.USEREVENT)
 
 def gameOver(whoWon, initObjects):
+    global WINDOWWIDTH, WINDOWHEIGHT
     FPSCLOCK = initObjects[0]
     DISPLAYSURF = initObjects[1]
     beginMusic('victory')
@@ -824,10 +1055,19 @@ def gameOver(whoWon, initObjects):
         DISPLAYSURF.blit(victorySurfA, victoryRectA)
         DISPLAYSURF.blit(victorySurfB, victoryRectB)
 
+        newDim = None
         for event in pygame.event.get():
             if event.type == KEYUP:
                 if event.key in (K_RETURN, K_KP_ENTER):
                     return
+            elif event.type == VIDEORESIZE:
+                newDim = event.size
+        
+        if newDim:
+            WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+            DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
+
+
         
 
         pygame.display.update()
@@ -838,6 +1078,7 @@ def gameOver(whoWon, initObjects):
 
 
 def bonusSuccess(whoWon, initObjects, bonusPokemon):
+    global WINDOWWIDTH, WINDOWHEIGHT
     FPSCLOCK = initObjects[0]
     DISPLAYSURF = initObjects[1]
     
@@ -863,6 +1104,28 @@ def bonusSuccess(whoWon, initObjects, bonusPokemon):
     while True:
         musicRepeat('bonus')
         checkForQuit()
+        
+        newDim = None
+        for event in pygame.event.get():
+            if event.type == VIDEORESIZE:
+                newDim = event.size
+            elif event.type == KEYUP:
+                if event.key == K_ESCAPE:
+                    terminate()
+                elif event.key == K_RETURN:
+                    return
+            elif event.type == QUIT:
+                terminate()
+
+        if newDim:
+            WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+            DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
+            victoryRectA.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
+            victoryRectB.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2+50)
+            menuRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
+            bonusPokemon.rect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/4)
+
+
         DISPLAYSURF.fill(WHITE)
         DISPLAYSURF.blit(menuSurf, menuRect)
         DISPLAYSURF.blit(bonusPokemon.surface, bonusPokemon.rect)
@@ -875,7 +1138,9 @@ def bonusSuccess(whoWon, initObjects, bonusPokemon):
  
 
 
+
 def bonusFail(initObjects):
+    global WINDOWWIDTH, WINDOWHEIGHT
     FPSCLOCK = initObjects[0]
     DISPLAYSURF = initObjects[1]
     pygame.mixer.music.stop()
@@ -897,6 +1162,26 @@ def bonusFail(initObjects):
     while True:
         
         checkForQuit()
+
+        newDim = None
+        for event in pygame.event.get():
+            if event.type == VIDEORESIZE:
+                newDim = event.size
+            elif event.type == KEYUP:
+                if event.key == K_ESCAPE:
+                    terminate()
+                elif event.key == K_RETURN:
+                    return
+            elif event.type == QUIT:
+                terminate()
+
+        if newDim:
+            WINDOWWIDTH, WINDOWHEIGHT = newDim[0], newDim[1]
+            DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
+            victoryRectA.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
+            victoryRectB.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2+50)
+            menuRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
+
         DISPLAYSURF.fill(WHITE)
         DISPLAYSURF.blit(menuSurf, menuRect)
         DISPLAYSURF.blit(victorySurfA, victoryRectA)
@@ -905,80 +1190,95 @@ def bonusFail(initObjects):
         pygame.display.update()
         FPSCLOCK.tick(FPS) 
 
- 
+def drawBackground(image, targetSurf):
+    global WINDOWWIDTH, WINDOWHEIGHT
+    bkgRect = image.get_rect()
+    bkgRect.center = (WINDOWWIDTH/2, WINDOWHEIGHT/2)
+    targetSurf.fill(BLACK)
+    targetSurf.blit(image, bkgRect)
 
 def game():
-    
+    global WINDOWWIDTH, WINDOWHEIGHT
+    WINDOWWIDTH = assets.WINDOWWIDTH
+    WINDOWHEIGHT = assets.WINDOWHEIGHT
     FPSCLOCK = pygame.time.Clock()    
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), pygame.RESIZABLE, display=0)
-    DISPLAYSURF.fill(BKGCOLOR)
+    DISPLAYSURF.fill(BLACK)
     pygame.display.set_caption('The PokeBall Game')
-
-    randomPokemon = assets.getRandomPoke()
-    pokemonTheme = randomPokemon[1]
-    
-    roundPokemon = assets.bonusPokemon(randomPokemon[0])
-
-    initObjects = [FPSCLOCK, DISPLAYSURF, roundPokemon, pokemonTheme] # Makes sending this into main, other screens flippin EASY tho.
-
-    sessionTeams = [assets.TeamA(), assets.TeamB()]
-    random.shuffle(sessionTeams)       
-
-
-    teamTurn = 0
-
-    # Books: It gives a choice of any excel files in the folder, but not the ~$ temp file, and skips 'example' files.
-
-    books = [os.path.splitext(title)[0] for title in os.listdir(quizPath) if os.path.splitext(title)[1] in ('.xlsx', '.XLSX') and '~$' not in os.path.splitext(title)[0] and os.path.splitext(title)[0] not in ('example', 'EXAMPLE')]
-    beginMusic(menuTrack)
-    
-    chosenBook = selectionMenu(initObjects, books)
-    sessionQuiz = assets.bookScheme(chosenBook)
-    
-    possibleUnits = sessionQuiz.getPossibleUnits()
-    chosenUnit = selectionMenu(initObjects, possibleUnits)
-    sessionQuiz.unit = chosenUnit
-
-    subsets = sessionQuiz.getPossibleSubsets()
-    chosenSubset = selectionMenu(initObjects, subsets)
-    subsetIndex = sessionQuiz.possibleSubsets.index(chosenSubset) + 2 # Plus 2 because also excel uses indexing starting from 0 :|
-    sessionQuiz.subset = subsetIndex
-
-    sessionQuiz.getQuestions()
-
-    # selectionList = [bookSelection, unitSelection, subSetSelection]
-    beginMusic(pokemonTheme)
-
-    winner = None
-      
-    while True: # This loop locks the game into repeating rounds
-        
-        sessionTeams, teamTurn, pokemon = main(sessionTeams, initObjects, teamTurn, sessionQuiz)
-        if pokemon.HPValue <= 0:
-            if sessionTeams[0].score > sessionTeams[1].score:
-                winner = sessionTeams[0]
-            elif sessionTeams[1].score > sessionTeams[0].score:
-                winner = sessionTeams[1]
-            else:
-                winner = random.choice(sessionTeams)
-        if winner:
-            break
-
-    
-    gameOver(winner, initObjects) # Show the main Game Over Screen
-
-
-    bonusPokemon = roundPokemon
-    beginMusic('game')
     while True:
-        musicRepeat('game')
-        caught, bonusPlayer = bonusGame(sessionTeams, winner, initObjects, bonusPokemon, pokemonTheme)
-        if caught == 'yes' and bonusPlayer:
-            bonusSuccess(bonusPlayer, initObjects, bonusPokemon)
-        elif caught == 'no':
-            assets.runAwaySound.play()
-            bonusFail(initObjects)
-        winner = bonusPlayer
+        randomPokemon = assets.getRandomPoke()
+        pokemonTheme = randomPokemon[1]
+    
+        roundPokemon = assets.bonusPokemon(randomPokemon[0])
+
+        initObjects = [FPSCLOCK, DISPLAYSURF, roundPokemon, pokemonTheme] # Makes sending this into main, other screens flippin EASY tho.
+
+        sessionTeams = [assets.TeamB(), assets.TeamA()]
+        random.shuffle(sessionTeams)      
+
+
+        teamTurn = 0
+
+        # Books: It gives a choice of any excel files in the folder, but not the ~$ temp file, and skips 'example' files.
+
+        books = [os.path.splitext(title)[0] for title in os.listdir(quizPath) if os.path.splitext(title)[1] in ('.xlsx', '.XLSX') and '~$' not in os.path.splitext(title)[0] and os.path.splitext(title)[0] not in ('example', 'EXAMPLE')]
+        beginMusic(menuTrack)
+    
+        chosenBook = selectionMenu(initObjects, books)
+        sessionQuiz = assets.bookScheme(chosenBook)
+    
+        possibleUnits = sessionQuiz.getPossibleUnits()
+        chosenUnit = selectionMenu(initObjects, possibleUnits)
+        sessionQuiz.unit = chosenUnit
+
+        subsets = sessionQuiz.getPossibleSubsets()
+        chosenSubset = selectionMenu(initObjects, subsets)
+        subsetIndex = sessionQuiz.possibleSubsets.index(chosenSubset) + 2 # Plus 2 because also excel uses indexing starting from 0 :|
+        sessionQuiz.subset = subsetIndex
+
+        sessionQuiz.getQuestions()
+
+        # selectionList = [bookSelection, unitSelection, subSetSelection]
+        beginMusic(pokemonTheme)
+
+        winner = None
+
+    
+        # sessionTeams[0].addGreatPoint()
+        # sessionTeams[0].addGreatPoint()  
+        # sessionTeams[0].addGreatPoint()  
+        # sessionTeams[0].addGreatPoint()  #Shortcut
+
+        while True: # This loop locks the game into repeating rounds
+        
+            sessionTeams, teamTurn, pokemon = main(sessionTeams, initObjects, teamTurn, sessionQuiz)
+            if pokemon.HPValue <= 0:
+                if sessionTeams[0].score > sessionTeams[1].score:
+                    winner = sessionTeams[0]
+                elif sessionTeams[1].score > sessionTeams[0].score:
+                    winner = sessionTeams[1]
+                else:
+                    winner = random.choice(sessionTeams)
+            if winner:
+                break
+
+    
+        gameOver(winner, initObjects) # Show the main Game Over Screen
+
+
+        bonusPokemon = roundPokemon
+        beginMusic('game')
+        while True:
+            musicRepeat('game')
+            caught, bonusPlayer = bonusGame(sessionTeams, winner, initObjects, bonusPokemon, pokemonTheme)
+            if caught == 'yes' and bonusPlayer:
+                bonusSuccess(bonusPlayer, initObjects, bonusPokemon)
+                break
+            elif caught == 'no':
+                assets.runAwaySound.play()
+                bonusFail(initObjects)
+                break
+            winner = bonusPlayer
             
 
        

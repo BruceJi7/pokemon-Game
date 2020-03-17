@@ -256,9 +256,9 @@ class bonusPokemon():
 
     
 
-    def drawHP(self, targetSurf):
-        HPBarX = WINDOWWIDTH/2
-        HPBarY = WINDOWHEIGHT/2 +80
+    def drawHP(self, targetSurf, xPos, yPos):
+        HPBarX = xPos/2
+        HPBarY = yPos/2 +80
         HPSurf = pygame.Surface((159, 15), pygame.SRCALPHA)
         HPRect = HPSurf.get_rect()
         HPRect.center = (HPBarX, HPBarY)
@@ -423,7 +423,9 @@ class Team():
     def score(self):
         scoreVal = 0
         for ball in self.scoreList:
-            if ball in ('G', 'U'):
+            if ball == 'U':
+                scoreVal += 3
+            elif ball == 'G':
                 scoreVal += 2
             elif ball == 'P':
                 scoreVal += 1
@@ -451,12 +453,13 @@ class Team():
         scoreList = self.scoreList
         lastPoint = scoreList.pop()
         self.scoreList = scoreList
-        print(self.scoreList)
+        # print(self.scoreList)
         return lastPoint
 
     
 
-    def drawTeamLabel(self, targetSurf):
+    def drawTeamLabel(self, targetSurf, xPos):
+
         ballX = 0
         ballY = 0
         self.teamSurf = pygame.Surface((154, 70), pygame.SRCALPHA)
@@ -483,12 +486,12 @@ class Team():
         teamLabelRect.topleft = ((20, 40))
         self.teamSurf.blit(teamLabel, teamLabelRect)
 
-        self.teamRect.topleft = (self.teamRectX, self.teamRectY)
+        self.teamRect.topleft = ((xPos-1024)/2 + self.teamRectX, self.teamRectY)
         targetSurf.blit(self.teamSurf, self.teamRect)
 
-    def drawTurnIndicator(self, targetSurf):
+    def drawTurnIndicator(self, targetSurf, xPos):
         turnIndicatorRect = self.turnIndicator.get_rect()
-        turnIndicatorRect.topleft = (self.turnIndicatorX, self.turnIndicatorY)
+        turnIndicatorRect.topleft = ((xPos-1024)/2 + self.turnIndicatorX, self.turnIndicatorY)
         targetSurf.blit(self.turnIndicator, turnIndicatorRect)         
     
 
@@ -508,9 +511,41 @@ class TeamB(Team):
         super().__init__(name='B')
 
         self.barImg = self.images['bar']['B']
-        self.teamRectX = (WINDOWWIDTH - 154 - 20)
-        self.turnIndicatorX = (WINDOWWIDTH - 154 - 20) 
+        self.teamRectX = 1024-174
+        self.turnIndicatorX = 1024-174
         self.pointSpacing = 8
+
+
+        def drawTeamLabel(self, targetSurf, xPos):
+
+            ballX = 0
+            ballY = 0
+            self.teamSurf = pygame.Surface((154, 70), pygame.SRCALPHA)
+            self.teamSurf.blit(self.barImg, (0, 0))
+            self.pointSurf = pygame.Surface((108,18), pygame.SRCALPHA)
+            self.pointSurf.fill(WHITE)
+            self.pointSurf.fill((0,0,0,0))
+            for ball in self.scoreList:
+                if ball == "P":
+                    ballImage = self.images['pokeScore']
+                elif ball == "G":
+                    ballImage = self.images['greatScore']
+                elif ball == "U":
+                    ballImage = self.images['ultraScore']
+                    # Calculate how many balls to show
+                self.pointSurf.blit(ballImage, (ballX, ballY))
+                ballX += 18
+
+            self.pointRect.topleft = (self.pointSpacing, 0)
+            self.teamSurf.blit(self.pointSurf, self.pointRect) # Add balls to main surface
+
+            teamLabel = pokeFont().render(self.labelText, 1, MAINTEXTCOLOR)
+            teamLabelRect = teamLabel.get_rect()
+            teamLabelRect.topleft = ((20, 40))
+            self.teamSurf.blit(teamLabel, teamLabelRect)
+
+            self.teamRect.topleft = ((xPos-1024)/2 + self.teamRectX , self.teamRectY)
+            targetSurf.blit(self.teamSurf, self.teamRect)
         
 
 class bookScheme():
@@ -599,7 +634,7 @@ class bookScheme():
             else:
                 break
         self.possibleSubsets = listOfSubsets
-        print(listOfSubsets)
+        # print(listOfSubsets)
         return listOfSubsets
 
     def getScheme(self):
@@ -607,7 +642,7 @@ class bookScheme():
         sheet = wb[self.unit]
 
         subsetColumnLocation = int(self.subset)
-        print(f'Subset location: {subsetColumnLocation}')
+        # print(f'Subset location: {subsetColumnLocation}')
         flashcardRangeCell = sheet.cell(2, subsetColumnLocation).value
         questionTypeCell = sheet.cell(3, subsetColumnLocation).value
 
@@ -622,7 +657,7 @@ class bookScheme():
     def getQuestions(self):
         
         self.getScheme()
-        print(self.questionFormat)
+        # print(self.questionFormat)
         if self.questionFormat == None:
             return None
         elif self.questionFormat in ('be', 'BE', 'Be'):
@@ -661,7 +696,7 @@ class bookScheme():
                 questionsLoadedFromExcelSheet.append('NO QUESTIONS LOADED')
             
             self.questions = questionsLoadedFromExcelSheet
-        print(self.questions)
+        # print(self.questions)
         return self.questions
             
         
@@ -696,10 +731,10 @@ def getTrigoXY(deg, hypo):
     inty = int(y)
     return (intx, inty)
 
-def getTrigoFromCenter(deg, hypo, WINDOWWIDTH, WINDOWHEIGHT):
+def getTrigoFromCenter(deg, hypo, width, height):
     trigX, trigY = getTrigoXY(deg, hypo)
 
-    return (trigX + WINDOWWIDTH/2, trigY+WINDOWHEIGHT/2)
+    return (trigX + width, trigY + height)
 
 def getTrigoForArc(deg, hypo, centreX, centreY):
     trigX, trigY = getTrigoXY(deg, hypo)
